@@ -18,8 +18,7 @@
     - Chat Pembeli dan Penjual - Bryan Christopher Kurniadi
         Fitur chat real-time antar pengguna agar komunikasi langsung bisa terjadi, entah itu nawar, minta ukuran sepatu, atau sekadar tanya warna barangnya beneran "hitam legam" atau "abu galau".
     Naik ingin menjadi platform lokal yang mendorong gaya hidup aktif dan sehat melalui kemudahan akses terhadap produk-produk olahraga berkualitas. Dengan tampilan yang modern, fitur yang lengkap, dan semangat anak muda, Naik bukan sekadar toko, tapi gerakan.
-3. Link Sumber Dataset
-    https://www.kaggle.com/datasets/polartech/nike-sportwear-product-dataset 
+3. Link Sumber Dataset: https://www.kaggle.com/datasets/polartech/nike-sportwear-product-dataset 
 
 4. Jenis Pengguna Website
     - Pembeli
@@ -51,8 +50,7 @@
         - Melakukan penanganan masalah teknis dan pengembalian dana bila diperlukan. 
         - Melakukan pengaturan di backend (fitur, kategori, kampanye promosi, dll).
 
-5. Link PWS
-    harish-azka-naik.pbp.cs.ui.ac.id 
+5. Link PWS: https://raymundo-rafaelito-naik.pbp.cs.ui.ac.id/
 
 6. Link Design Website
     Mobile:
