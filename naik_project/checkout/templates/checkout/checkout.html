@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f9fafb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        label {
+            font-weight: bold;
+        }
+        textarea, select, input {
+            width: 100%;
+            padding: .6rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-top: .3rem;
+            margin-bottom: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: .8rem;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Checkout</h1>
+
+    <form id="checkoutForm">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+
+        <label>Alamat Pengiriman:</label>
+        <textarea name="address" placeholder="Masukkan alamat lengkap" required></textarea>
+
+        <label>Metode Pembayaran:</label>
+        <select name="payment_method">
+            <option value="COD">Cash on Delivery</option>
+            <option value="TRANSFER">Transfer Bank</option>
+            <option value="EWALLET" selected>E-Wallet</option>
+        </select>
+
+        <label>Total Harga:</label>
+        <input type="number" name="total_price" value="{{ product.price }}" step="0.01" readonly>
+
+        <button type="submit">Bayar Sekarang</button>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById("checkoutForm");
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch("", {
+            method: "POST",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                window.location.href = `/checkout/success/`;
+            } else {
+                alert("Checkout gagal!");
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    });
+</script>
+</body>
+</html>
