@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Naik Product</title>
+{% endblock meta %}
+
+{% block content %}
+{% include 'navbar.html' %}
+<div class="bg-gray-50 w-full pt-16 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero Section -->
+    <div class="relative w-full h-[70vh] bg-gray-900 overflow-hidden rounded-b-2xl mb-12">
+      <img src="{% static 'image/hero-banner.png' %}" alt="Hero Banner" class="absolute inset-0 w-full h-full object-cover opacity-80">
+    
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-6">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 tracking-tight">I JUST DID IT</h1>
+        <p class="text-lg md:text-xl mb-6 max-w-2xl">The ultimate in lightweight containment and twitchy responsiveness.</p>
+        <a href="{% url 'main:create_product' %}" class="bg-white text-gray-900 font-semibold px-6 py-3 rounded-md hover:bg-gray-100 transition-all">Shop Now</a>
+      </div>
+    </div>
+
+
+    <!-- Product Grid -->
+    {% if not product_list %}
+      <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+        <div class="w-32 h-32 mx-auto mb-4">
+          <img src="{% static 'image/no-image.png' %}" alt="No product available" class="w-full h-full object-contain">
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No product found</h3>
+        <p class="text-gray-500 mb-6">Be the first to share Naik product with the community.</p>
+        <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          Create Product
+        </a>
+      </div>
+    {% else %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in product_list %}
+          {% include 'card_product.html' with product=product %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}
