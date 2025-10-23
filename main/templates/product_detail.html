@@ -16,6 +16,7 @@
             </a>
         </div>
         
+<<<<<<< HEAD
         <!-- Article -->
         <article class="bg-white rounded-lg border border-gray-200 overflow-hidden">
             
@@ -81,8 +82,72 @@
                         <p class="text-sm text-gray-500">Author</p>
                     </div>
                 </div>
+=======
+        <!-- Product Detail -->
+        <article class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+            <div class="p-6 sm:p-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-2">
+                    {{ product.title }}
+                </h1>
+
+                <p class="text-lg text-gray-700 mb-2">Harga: <strong>Rp{{ product.price }}</strong></p>
+                <p class="text-md text-gray-600 mb-4">Stok tersisa: 
+                    {% if product.stock > 0 %}
+                        <span class="text-green-600 font-semibold">{{ product.stock }}</span>
+                    {% else %}
+                        <span class="text-red-600 font-semibold">Habis</span>
+                    {% endif %}
+                </p>
+
+                {% if product.stock > 0 %}
+                <form id="checkout-form" method="get" action="{% url 'checkout:checkout_view' %}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    
+                    <label for="quantity" class="block mb-2 text-gray-700 font-medium">Jumlah:</label>
+                    <input 
+                        type="number" 
+                        name="quantity" 
+                        id="quantity" 
+                        min="1" 
+                        max="{{ product.stock }}" 
+                        value="1" 
+                        class="border rounded-lg px-3 py-2 mb-4 w-24 text-center"
+                        required
+                    >
+
+                    <p id="error-msg" class="text-red-600 text-sm mb-3"></p>
+
+                    <button type="submit" id="buy-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition">
+                        Beli Sekarang
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-red-600 font-semibold mt-3">Produk sedang habis stok.</p>
+                {% endif %}
+>>>>>>> checkout
             </div>
         </article>
     </div>
 </div>
+<<<<<<< HEAD
 {% endblock content %}
+=======
+
+<script>
+document.getElementById('checkout-form')?.addEventListener('submit', function(e) {
+    const quantityInput = document.getElementById('quantity');
+    const maxStock = parseInt(quantityInput.max);
+    const value = parseInt(quantityInput.value);
+    const errorMsg = document.getElementById('error-msg');
+
+    if (value < 1 || value > maxStock) {
+        e.preventDefault();
+        errorMsg.textContent = `Jumlah harus antara 1 dan ${maxStock}.`;
+    } else {
+        errorMsg.textContent = '';
+    }
+});
+</script>
+{% endblock content %}
+>>>>>>> checkout
