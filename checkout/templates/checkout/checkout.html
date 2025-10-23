@@ -27,7 +27,7 @@
         label {
             font-weight: bold;
         }
-        textarea, select, input {
+        textarea, select, input[type="text"], input[type="number"] {
             width: 100%;
             padding: .6rem;
             border-radius: 6px;
@@ -53,6 +53,24 @@
             color: #2563eb;
             text-align: right;
             margin-bottom: 1rem;
+        }
+        .insurance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: .5rem .2rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f3f4f6;
+        }
+        .insurance-row span {
+            font-weight: 500;
+        }
+        .insurance-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -81,10 +99,25 @@
             <option value="EWALLET" selected>E-Wallet</option>
         </select>
 
-        <label>Total Harga:</label>
-        <input type="number" name="total_price" value="{{ total_price }}" step="0.01" readonly>
+        <label>Jenis Pengiriman:</label>
+        <select name="shipping_type" id="shippingType">
+            <option value="BIASA">Biasa (Gratis)</option>
+            <option value="CEPAT">Cepat (+Rp10.000)</option>
+            <option value="SAMEDAY">Same Day (+Rp20.000)</option>
+        </select>
 
-        <div class="price-display">
+        <div class="insurance-row">
+            <span>Tambahkan Asuransi Barang (+Rp5.000)</span>
+            <input type="checkbox" id="insurance" name="insurance">
+        </div>
+
+        <label>Catatan Tambahan:</label>
+        <textarea name="note" placeholder="Contoh: tolong bungkus rapi"></textarea>
+
+        <label>Total Harga:</label>
+        <input type="text" name="total_price" id="totalInput" value="Rp{{ total_price|floatformat:0 }}" readonly>
+
+        <div class="price-display" id="priceDisplay">
             Total: Rp{{ total_price|floatformat:0 }}
         </div>
 
@@ -93,20 +126,41 @@
 </div>
 
 <script>
+    const baseTotal = parseFloat("{{ total_price }}");
+    const insuranceCheckbox = document.getElementById("insurance");
+    const shippingSelect = document.getElementById("shippingType");
+    const totalInput = document.getElementById("totalInput");
+    const totalDisplay = document.getElementById("priceDisplay");
+
+    function formatRupiah(num) {
+        return "Rp" + num.toLocaleString("id-ID");
+    }
+
+    function updateTotal() {
+        let finalTotal = baseTotal;
+        const shipping = shippingSelect.value;
+
+        if (shipping === "CEPAT") finalTotal += 10000;
+        if (shipping === "SAMEDAY") finalTotal += 20000;
+        if (insuranceCheckbox.checked) finalTotal += 5000;
+
+        totalInput.value = formatRupiah(finalTotal);
+        totalDisplay.textContent = `Total: ${formatRupiah(finalTotal)}`;
+    }
+
+    insuranceCheckbox.addEventListener("change", updateTotal);
+    shippingSelect.addEventListener("change", updateTotal);
+
     const form = document.getElementById("checkoutForm");
     form.addEventListener("submit", function(e) {
         e.preventDefault();
-
         const formData = new FormData(form);
-
         fetch("", {
             method: "POST",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
+            headers: { "X-Requested-With": "XMLHttpRequest" },
             body: formData
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.status === "success") {
                 window.location.href = `/checkout/success/`;
@@ -114,7 +168,7 @@
                 alert(data.message || "Checkout gagal!");
             }
         })
-        .catch(error => console.error("Error:", error));
+        .catch(err => console.error("Error:", err));
     });
 </script>
 </body>
