@@ -40,12 +40,6 @@ class Profile(models.Model):
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.create(user=instance, role='buyer')
     else:
         instance.profile.save()
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        from .models import Profile
-        Profile.objects.create(user=instance, role='buyer')  # default role

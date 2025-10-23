@@ -95,14 +95,20 @@ def register(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.save()
             role = form.cleaned_data.get('role')
-            user.profile.role = role
-            user.profile.save()
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.role = role
+            profile.save()
             messages.success(request, 'Your account has been successfully created!')
             return redirect('main:login')
+        else:
+            print(form.errors)  # 👈 ADD THIS LINE to show what’s wrong in the terminal
+
     context = {'form': form}
     return render(request, 'register.html', context)
+
 def login_user(request):
    if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -138,7 +144,7 @@ def edit_product(request, id):
 
     return render(request, "edit_product.html", context)
 
-@login_required
+@login_required(login_url='/login')
 def delete_product(request, id):
     product = Product.objects.get(id=id)
 

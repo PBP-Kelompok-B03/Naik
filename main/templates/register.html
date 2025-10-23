@@ -11,7 +11,16 @@
 
     <form method="POST" class="space-y-5">
       {% csrf_token %}
-      
+
+      <!-- 🧠 Non-field errors (like password mismatch, duplicate username, etc.) -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-md">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <!-- Role -->
       <div>
         {{ form.role }}
@@ -30,6 +39,9 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
           required
         >
+        {% if form.username.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+        {% endif %}
       </div>
 
       <!-- Password -->
@@ -41,6 +53,9 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
           required
         >
+        {% if form.password1.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+        {% endif %}
       </div>
 
       <!-- Confirm Password -->
@@ -52,6 +67,9 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
           required
         >
+        {% if form.password2.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+        {% endif %}
       </div>
 
       <button 
