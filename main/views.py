@@ -13,6 +13,11 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from .forms import CustomUserCreationForm
 from .models import Profile
+import os
+from django.conf import settings
+from django.http import HttpResponseForbidden
+from main.forms import ProductForm
+from main.models import Product
 
 
 
@@ -36,22 +41,43 @@ def show_main(request):
 
 @login_required(login_url='/login')
 def create_product(request):
+    # Only 'seller' and 'admin' can add products
     if request.user.profile.role not in ['seller', 'admin']:
         return HttpResponseForbidden("You don't have permission to add products.")
 
-    form = ProductForm(request.POST or None)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.user = request.user
+            product.save()
 
-    if form.is_valid() and request.method == 'POST':
-        product_entry = form.save(commit = False)
-        product_entry.user = request.user
-        product_entry.save()
-        return redirect('main:show_main')
+            # Save image as static/image/products/<index>.avif
+            uploaded_file = request.FILES.get('thumbnail')
+            if uploaded_file:
+                products_dir = os.path.join(settings.BASE_DIR, 'static', 'image', 'products')
+                os.makedirs(products_dir, exist_ok=True)
 
-    context = {
-        'form': form
-    }
+                # Find the next available index
+                existing_files = [f for f in os.listdir(products_dir) if f.endswith('.avif')]
+                next_index = len(existing_files) + 1
+                new_filename = f"{next_index}.avif"
+                new_path = os.path.join(products_dir, new_filename)
 
-    return render(request, "create_product.html", context)
+                # Save uploaded file
+                with open(new_path, 'wb+') as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
+
+                # Update product thumbnail path
+                product.thumbnail = f"image/products/{new_filename}"
+                product.save()
+
+            return redirect('main:show_main')
+    else:
+        form = ProductForm()
+
+    return render(request, "create_product.html", {'form': form})
 
 @login_required(login_url='/login')
 def show_product(request, id):
@@ -158,5 +184,5 @@ def delete_product(request, id):
 
     # Admins can delete anything, no restrictions
     product.delete()
-    messages.success(request, f"Product '{product.name}' has been deleted successfully!")
+    messages.success(request, f"Product '{product.title}' has been deleted successfully!")
     return redirect('main:show_main')

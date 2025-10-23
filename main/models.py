@@ -17,9 +17,8 @@ class Product(models.Model):
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default="Men's Shoes")
-    thumbnail = models.CharField(max_length=255, blank=True, null=True)
-    count_sold = models.PositiveIntegerField(default=0)
-    stock = models.PositiveIntegerField(default=10)  # 🆕 Tambah stok produk
+    thumbnail = models.ImageField(upload_to='image/products/temp/', null=True, blank=True)
+    stock = models.PositiveIntegerField(default=10)
 
     def __str__(self):
         return self.title

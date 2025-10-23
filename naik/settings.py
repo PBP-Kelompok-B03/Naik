@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'main',
     'checkout',
+    'search',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'naik.urls'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 TEMPLATES = [
     {

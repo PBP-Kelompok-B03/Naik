@@ -1,11 +1,11 @@
 {% load static humanize %}
-<article class="bg-white rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group">
+<article class="bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 group">
   <!-- Product Image -->
-  <div class="relative bg-gray-50 overflow-hidden">
+  <div class="relative bg-gray-50 overflow-hidden aspect-[4/3]">
     {% if product.thumbnail %}
       <img src="{% static product.thumbnail %}" 
            alt="{{ product.title }}" 
-           class="w-full h-full object-cover rounded-lg">
+           class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105">
     {% else %}
       <img src="{% static 'image/no-image.png' %}" 
            alt="No image" 
@@ -23,13 +23,13 @@
   <div class="p-4">
     <!-- Product Title -->
     <h3 class="text-base font-semibold text-gray-900 mb-0.5 leading-snug">
-      <a href="{% url 'main:show_product' product.id %}" class="hover:underline">
+      <a href="{% url 'main:show_product' product.id %}" class="hover:text-black transition-colors duration-200">
         {{ product.title }}
       </a>
     </h3>
 
     <!-- Category -->
-    <p class="text-sm text-gray-500 mb-1">
+    <p class="text-sm text-gray-500 mb-1 group-hover:text-gray-700 transition-colors duration-200">
       {{ product.get_category_display }}
     </p>
 
@@ -42,31 +42,33 @@
     {% if user.is_authenticated %}
       {% if product.user == user or user.profile.role == 'admin' %}
         <div class="flex items-center justify-between border-t border-gray-100 pt-3 mt-3">
-          <a href="{% url 'main:show_product' product.id %}" class="text-black-600 hover:text-black-700 font-medium text-sm transition-colors">
+          <a href="{% url 'main:show_product' product.id %}" class="text-gray-800 hover:text-black font-medium text-sm transition-all duration-200">
             Product details
           </a>
           <div class="flex space-x-3">
             {% if product.user == user %}
-              <a href="{% url 'main:edit_product' product.id %}" class="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors">
+              <a href="{% url 'main:edit_product' product.id %}" 
+                 class="text-gray-500 hover:text-gray-800 text-sm font-medium transition-all duration-200 hover:underline">
                 Edit
               </a>
             {% endif %}
-            <a href="{% url 'main:delete_product' product.id %}" class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
+            <a href="{% url 'main:delete_product' product.id %}" 
+               class="text-red-600 hover:text-red-700 text-sm font-medium transition-all duration-200 hover:underline">
               Delete
             </a>
           </div>
         </div>
       {% else %}
         <div class="pt-3 mt-3 border-t border-gray-100">
-          <a href="{% url 'main:show_product' product.id %}" class="text-black-600 hover:text-black-700 font-medium text-sm transition-colors">
+          <a href="{% url 'main:show_product' product.id %}" class="text-gray-800 hover:text-black font-medium text-sm transition-all duration-200">
             Product details →
           </a>
         </div>
       {% endif %}
     {% else %}
       <div class="pt-3 mt-3 border-t border-gray-100">
-        <a href="{% url 'main:show_product' product.id %}" class="text-black-600 hover:text-black-700 font-medium text-sm transition-colors">
-          Product details
+        <a href="{% url 'main:show_product' product.id %}" class="text-gray-800 hover:text-black font-medium text-sm transition-all duration-200">
+          Product details →
         </a>
       </div>
     {% endif %}
