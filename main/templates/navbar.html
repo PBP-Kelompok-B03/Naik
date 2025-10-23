@@ -9,13 +9,13 @@
         
         <!-- Desktop Navigation -->
         <div class="hidden md:flex items-center space-x-8">
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Auction
           </a>
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Chat
           </a>
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Search Product
           </a>
           {% if user.profile.role == 'seller' or user.profile.role == 'admin' %}
@@ -61,13 +61,13 @@
       <div class="px-6 py-4 space-y-4">
         <!-- Mobile Navigation Links -->
         <div class="space-y-1">
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Auction
           </a>
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Chat
           </a>
-          <a href="{% url 'main:create_product' %}" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
+          <a href="/" class="block text-gray-600 hover:text-gray-900 font-medium py-3 transition-colors">
             Search Product
           </a>
           {% if user.profile.role == 'seller' or user.profile.role == 'admin' %}
