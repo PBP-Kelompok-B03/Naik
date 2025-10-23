@@ -19,11 +19,15 @@ class Product(models.Model):
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default="Men's Shoes")
     thumbnail = models.CharField(max_length=255, blank=True, null=True)
     count_sold = models.PositiveIntegerField(default=0)
+    stock = models.PositiveIntegerField(default=10)  # 🆕 Tambah stok produk
 
     def __str__(self):
         return self.title
-    
-    
+
+    def is_in_stock(self):
+        return self.stock > 0
+
+
 class Profile(models.Model):
     ROLE_CHOICES = [
         ('buyer', 'Buyer'),
@@ -36,7 +40,8 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
-    
+
+
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:

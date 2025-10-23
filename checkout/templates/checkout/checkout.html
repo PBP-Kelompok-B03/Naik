@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f9fafb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        label {
+            font-weight: bold;
+        }
+        textarea, select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: .6rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-top: .3rem;
+            margin-bottom: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: .8rem;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .price-display {
+            font-weight: bold;
+            color: #2563eb;
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+        .insurance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: .5rem .2rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f3f4f6;
+        }
+        .insurance-row span {
+            font-weight: 500;
+        }
+        .insurance-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Checkout</h1>
+
+    <form id="checkoutForm">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <input type="hidden" name="quantity" value="{{ quantity }}">
+
+        <label>Nama Produk:</label>
+        <input type="text" value="{{ product.title }}" readonly>
+
+        <label>Jumlah:</label>
+        <input type="number" value="{{ quantity }}" readonly>
+
+        <label>Alamat Pengiriman:</label>
+        <textarea name="address" placeholder="Masukkan alamat lengkap" required></textarea>
+
+        <label>Metode Pembayaran:</label>
+        <select name="payment_method">
+            <option value="COD">Cash on Delivery</option>
+            <option value="TRANSFER">Transfer Bank</option>
+            <option value="EWALLET" selected>E-Wallet</option>
+        </select>
+
+        <label>Jenis Pengiriman:</label>
+        <select name="shipping_type" id="shippingType">
+            <option value="BIASA">Biasa (Gratis)</option>
+            <option value="CEPAT">Cepat (+Rp10.000)</option>
+            <option value="SAMEDAY">Same Day (+Rp20.000)</option>
+        </select>
+
+        <div class="insurance-row">
+            <span>Tambahkan Asuransi Barang (+Rp5.000)</span>
+            <input type="checkbox" id="insurance" name="insurance">
+        </div>
+
+        <label>Catatan Tambahan:</label>
+        <textarea name="note" placeholder="Contoh: tolong bungkus rapi"></textarea>
+
+        <label>Total Harga:</label>
+        <input type="text" name="total_price" id="totalInput" value="Rp{{ total_price|floatformat:0 }}" readonly>
+
+        <div class="price-display" id="priceDisplay">
+            Total: Rp{{ total_price|floatformat:0 }}
+        </div>
+
+        <button type="submit">Bayar Sekarang</button>
+    </form>
+</div>
+
+<script>
+    const baseTotal = parseFloat("{{ total_price }}");
+    const insuranceCheckbox = document.getElementById("insurance");
+    const shippingSelect = document.getElementById("shippingType");
+    const totalInput = document.getElementById("totalInput");
+    const totalDisplay = document.getElementById("priceDisplay");
+
+    function formatRupiah(num) {
+        return "Rp" + num.toLocaleString("id-ID");
+    }
+
+    function updateTotal() {
+        let finalTotal = baseTotal;
+        const shipping = shippingSelect.value;
+
+        if (shipping === "CEPAT") finalTotal += 10000;
+        if (shipping === "SAMEDAY") finalTotal += 20000;
+        if (insuranceCheckbox.checked) finalTotal += 5000;
+
+        totalInput.value = formatRupiah(finalTotal);
+        totalDisplay.textContent = `Total: ${formatRupiah(finalTotal)}`;
+    }
+
+    insuranceCheckbox.addEventListener("change", updateTotal);
+    shippingSelect.addEventListener("change", updateTotal);
+
+    const form = document.getElementById("checkoutForm");
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        fetch("", {
+            method: "POST",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === "success") {
+                window.location.href = `/checkout/success/`;
+            } else {
+                alert(data.message || "Checkout gagal!");
+            }
+        })
+        .catch(err => console.error("Error:", err));
+    });
+</script>
+</body>
+</html>

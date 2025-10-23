@@ -16,73 +16,66 @@
             </a>
         </div>
         
-        <!-- Article -->
-        <article class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            
-            <!-- Header -->
+        <!-- Product Detail -->
+        <article class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
             <div class="p-6 sm:p-8">
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-600 text-white">
-                        {{ product.get_category_display }}
-                    </span>
-                    {% if product.is_featured %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Featured
-                        </span>
-                    {% endif %}
-                    {% if product.is_product_hot %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
-                            Hot
-                        </span>
-                    {% endif %}
-                </div>
-                
-                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-4">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-2">
                     {{ product.title }}
                 </h1>
-                
-                <div class="flex flex-wrap items-center text-sm text-gray-500 gap-4">
-                    <time datetime="{{ product.created_at|date:'c' }}">
-                        {{ product.created_at|date:"M j, Y g:i A" }}
-                    </time>
-                    <span>{{ product.product_views }} views</span>
-                </div>
-            </div>
 
-            <!-- Featured Image -->
-            {% if product.thumbnail %}
-                <div class="px-6 sm:px-8">
-                    <img src="{{ product.thumbnail }}" 
-                         alt="{{ product.title }}" 
-                         class="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-lg">
-                </div>
-            {% endif %}
+                <p class="text-lg text-gray-700 mb-2">Harga: <strong>Rp{{ product.price }}</strong></p>
+                <p class="text-md text-gray-600 mb-4">Stok tersisa: 
+                    {% if product.stock > 0 %}
+                        <span class="text-green-600 font-semibold">{{ product.stock }}</span>
+                    {% else %}
+                        <span class="text-red-600 font-semibold">Habis</span>
+                    {% endif %}
+                </p>
 
-            <!-- Content -->
-            <div class="p-6 sm:p-8">
-                <div class="prose prose-lg max-w-none">
-                    <div class="text-gray-700 leading-relaxed whitespace-pre-line text-base sm:text-lg">
-                        {{ product.content }}
-                    </div>
-                </div>
-            </div>
+                {% if product.stock > 0 %}
+                <form id="checkout-form" method="get" action="{% url 'checkout:checkout_view' %}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    
+                    <label for="quantity" class="block mb-2 text-gray-700 font-medium">Jumlah:</label>
+                    <input 
+                        type="number" 
+                        name="quantity" 
+                        id="quantity" 
+                        min="1" 
+                        max="{{ product.stock }}" 
+                        value="1" 
+                        class="border rounded-lg px-3 py-2 mb-4 w-24 text-center"
+                        required
+                    >
 
-            <!-- Author Info -->
-            <div class="border-t border-gray-200 p-6 sm:p-8 bg-gray-50">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-medium text-gray-900">
-                            {% if product.user %}
-                                <p>Author: {{ product.user.username }}</p>
-                            {% else %}
-                                <p>Author: Anonymous</p>
-                            {% endif %}
-                        </div>
-                        <p class="text-sm text-gray-500">Author</p>
-                    </div>
-                </div>
+                    <p id="error-msg" class="text-red-600 text-sm mb-3"></p>
+
+                    <button type="submit" id="buy-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition">
+                        Beli Sekarang
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-red-600 font-semibold mt-3">Produk sedang habis stok.</p>
+                {% endif %}
             </div>
         </article>
     </div>
 </div>
+
+<script>
+document.getElementById('checkout-form')?.addEventListener('submit', function(e) {
+    const quantityInput = document.getElementById('quantity');
+    const maxStock = parseInt(quantityInput.max);
+    const value = parseInt(quantityInput.value);
+    const errorMsg = document.getElementById('error-msg');
+
+    if (value < 1 || value > maxStock) {
+        e.preventDefault();
+        errorMsg.textContent = `Jumlah harus antara 1 dan ${maxStock}.`;
+    } else {
+        errorMsg.textContent = '';
+    }
+});
+</script>
 {% endblock content %}
