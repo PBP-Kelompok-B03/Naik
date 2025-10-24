@@ -1,0 +1,36 @@
+{% load static %}
+
+<footer class="bg-[#1A1A1A] text-gray-400 py-10 mt-20 border-t border-gray-700">
+  <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+    
+    <!-- Left: Logo and Text -->
+    <div class="flex items-center space-x-3">
+      <img src="{% static 'image/navbar_logo.png' %}" 
+           alt="Naik Logo" 
+           class="h-8 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity duration-200">
+      <p class="text-sm text-gray-400">© 2025 Naik Product. All rights reserved.</p>
+    </div>
+
+    <!-- Center: Navigation Links -->
+    <div class="flex space-x-6 text-sm">
+      <a href="/" class="hover:text-gray-200 transition-colors">Home</a>
+      <a href="{% url 'search:search_products' %}" class="hover:text-gray-200 transition-colors">Shop</a>
+      <a href="/" class="hover:text-gray-200 transition-colors">Auction</a>
+      <a href="/" class="hover:text-gray-200 transition-colors">Chat</a>
+    </div>
+
+    <!-- Right: Social Icons -->
+    <div class="flex space-x-5">
+      <a href="#" class="hover:text-gray-200 transition-colors">
+        <i class="fab fa-instagram"></i>
+      </a>
+      <a href="#" class="hover:text-gray-200 transition-colors">
+        <i class="fab fa-twitter"></i>
+      </a>
+      <a href="#" class="hover:text-gray-200 transition-colors">
+        <i class="fab fa-facebook"></i>
+      </a>
+    </div>
+
+  </div>
+</footer>

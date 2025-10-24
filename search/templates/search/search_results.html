@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Search - Naik Product</title>
+{% endblock meta %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="bg-gray-50 w-full min-h-screen pt-20 pb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Search Section (controls MUST be outside #productResults) -->
+    <div class="mb-8 space-y-4">
+      <div class="flex items-center gap-3">
+        <input id="searchQuery" type="text" name="q" placeholder="Search products..." value="{{ query }}"
+               class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-black focus:outline-none"
+        >
+        <button id="searchBtn"
+                class="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition">
+          Search
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mt-2">
+        <button id="filterCategoryBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-800 bg-white hover:bg-gray-100 transition">
+          Filter by Category
+        </button>
+
+        <button id="filterPriceBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-800 bg-white hover:bg-gray-100 transition">
+          Filter by Price
+        </button>
+      </div>
+
+      <!-- Active Filters -->
+      <div id="activeFilters" class="flex flex-wrap gap-2 mt-3"></div>
+    </div>
+
+    <!-- Products Grid (only this block will be replaced by AJAX) -->
+    <div id="productResults">
+      {% if products %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for product in products %}
+            {% include 'card_product.html' with product=product %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white rounded-lg border border-gray-200 p-10 text-center text-gray-600">
+          <p>No products found for your search.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ====== Category Modal ====== -->
+<div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-80 shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">Select Category</h3>
+    <select id="categorySelect" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-6">
+      <option value="">All Categories</option>
+      <option value="Men's Shoes">Men's Shoes</option>
+      <option value="Women's Shoes">Women's Shoes</option>
+      <option value="Kids' Shoes">Kids' Shoes</option>
+      <option value="Golf Shoes">Golf Shoes</option>
+    </select>
+
+    <div class="flex justify-end space-x-2">
+      <button id="cancelCategory" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Cancel</button>
+      <button id="applyCategory" class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Price Modal ====== -->
+<div id="priceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-80 shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">Set Price Range (IDR)</h3>
+    <input id="minPrice" type="number" placeholder="Min Price" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-3">
+    <input id="maxPrice" type="number" placeholder="Max Price" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-6">
+    <div class="flex justify-end space-x-2">
+      <button id="cancelPrice" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100">Cancel</button>
+      <button id="applyPrice" class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== AJAX + UI Script ====== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Elements (make sure IDs match the template)
+  const queryInput = document.getElementById('searchQuery');
+  const searchBtn = document.getElementById('searchBtn');
+
+  const categoryBtn = document.getElementById('filterCategoryBtn');
+  const priceBtn = document.getElementById('filterPriceBtn');
+
+  const productContainer = document.getElementById('productResults');
+  const activeFilters = document.getElementById('activeFilters');
+
+  // Modals & controls
+  const categoryModal = document.getElementById('categoryModal');
+  const categorySelect = document.getElementById('categorySelect');
+  const cancelCategory = document.getElementById('cancelCategory');
+  const applyCategory = document.getElementById('applyCategory');
+
+  const priceModal = document.getElementById('priceModal');
+  const minPrice = document.getElementById('minPrice');
+  const maxPrice = document.getElementById('maxPrice');
+  const cancelPrice = document.getElementById('cancelPrice');
+  const applyPrice = document.getElementById('applyPrice');
+
+  // Initialize filters from URL so state persists on reload
+  const urlParams = new URLSearchParams(window.location.search);
+  let filters = {
+    q: urlParams.get('q') || '',
+    category: urlParams.get('category') || '',
+    min_price: urlParams.get('min_price') || '',
+    max_price: urlParams.get('max_price') || ''
+  };
+
+  // set initial input values
+  queryInput.value = filters.q;
+
+  // Utility: open/close modal helpers
+  function openModal(modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    // center via flex
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+  }
+  function closeModal(modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  // Category modal handlers
+  categoryBtn.addEventListener('click', () => {
+    categorySelect.value = filters.category || '';
+    openModal(categoryModal);
+  });
+  cancelCategory.addEventListener('click', () => closeModal(categoryModal));
+  applyCategory.addEventListener('click', () => {
+    filters.category = categorySelect.value || '';
+    closeModal(categoryModal);
+    fetchProducts();
+  });
+
+  // Price modal handlers
+  priceBtn.addEventListener('click', () => {
+    minPrice.value = filters.min_price || '';
+    maxPrice.value = filters.max_price || '';
+    openModal(priceModal);
+  });
+  cancelPrice.addEventListener('click', () => closeModal(priceModal));
+  applyPrice.addEventListener('click', () => {
+    filters.min_price = minPrice.value || '';
+    filters.max_price = maxPrice.value || '';
+    closeModal(priceModal);
+    fetchProducts();
+  });
+
+  // Search button (and Enter key) handlers
+  searchBtn.addEventListener('click', () => {
+    filters.q = queryInput.value.trim();
+    fetchProducts();
+  });
+  queryInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      filters.q = queryInput.value.trim();
+      fetchProducts();
+    }
+  });
+
+  // AJAX fetch function: requests page with ?params, expects full HTML and extracts #productResults
+  function fetchProducts() {
+    const params = new URLSearchParams(filters).toString();
+    const url = window.location.pathname + (params ? `?${params}` : '');
+
+    fetch(url, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      method: 'GET'
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.text();
+    })
+    .then(html => {
+      // parse returned HTML and extract #productResults
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newResults = doc.querySelector('#productResults');
+
+      if (newResults) {
+        productContainer.innerHTML = newResults.innerHTML;
+      } else {
+        // fallback: replace whole container with returned html (safe fallback)
+        productContainer.innerHTML = html;
+      }
+
+      // update UI (chips + buttons)
+      updateActiveFiltersUI();
+
+      // update URL without reloading so filters persist/shareable
+      if (params) {
+        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+      } else {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    })
+    .catch(err => {
+      console.error('Fetch error:', err);
+    });
+  }
+
+  // Build chips and update button text/color
+  function updateActiveFiltersUI() {
+    // clear chips
+    activeFilters.innerHTML = '';
+
+    // category
+    if (filters.category) {
+      setFilteredButton(categoryBtn, `Filtered by Category: ${filters.category}`);
+      createChip(`Category: ${filters.category}`, 'category');
+    } else {
+      resetButton(categoryBtn, 'Filter by Category');
+    }
+
+    // price
+    if (filters.min_price || filters.max_price) {
+      const minFormatted = filters.min_price ? Number(filters.min_price).toLocaleString('id-ID') : '0';
+      const maxFormatted = filters.max_price ? Number(filters.max_price).toLocaleString('id-ID') : '∞';
+      setFilteredButton(priceBtn, `Filtered by Price: Rp ${minFormatted} - Rp ${maxFormatted}`);
+      createChip(`Price: Rp ${minFormatted} - Rp ${maxFormatted}`, 'price');
+    } else {
+      resetButton(priceBtn, 'Filter by Price');
+    }
+  }
+
+  function setFilteredButton(button, text) {
+    button.textContent = text;
+    button.classList.add('bg-black', 'text-white');
+    button.classList.remove('hover:bg-gray-100');
+  }
+  function resetButton(button, defaultText) {
+    button.textContent = defaultText;
+    button.classList.remove('bg-black', 'text-white');
+    if (!button.classList.contains('hover:bg-gray-100')) {
+      button.classList.add('hover:bg-gray-100');
+    }
+  }
+
+  // Create an active filter chip with a remove action
+  function createChip(label, type) {
+    const chip = document.createElement('div');
+    chip.className = 'flex items-center bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm';
+    const span = document.createElement('span');
+    span.textContent = label;
+    const btn = document.createElement('button');
+    btn.className = 'ml-2 text-gray-500 hover:text-red-600 focus:outline-none';
+    btn.innerHTML = '✕';
+    btn.addEventListener('click', () => {
+      if (type === 'category') filters.category = '';
+      if (type === 'price') { filters.min_price = ''; filters.max_price = ''; }
+      fetchProducts();
+    });
+    chip.appendChild(span);
+    chip.appendChild(btn);
+    activeFilters.appendChild(chip);
+  }
+
+  // initialize UI on first load based on URL params
+  updateActiveFiltersUI();
+
+});
+</script>
+
+{% include 'footer.html' %}
+{% endblock content %}
