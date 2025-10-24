@@ -186,3 +186,29 @@ def delete_product(request, id):
     product.delete()
     messages.success(request, f"Product '{product.title}' has been deleted successfully!")
     return redirect('main:show_main')
+
+@user_passes_test(lambda u: u.is_superuser or u.profile.role == 'admin')
+def load_dataset(request):
+    csv_path = os.path.join(settings.BASE_DIR, 'static', 'data', 'products.csv')
+    image_dir = 'image/products'  # relative to /static/
+
+    if not os.path.exists(csv_path):
+        return JsonResponse({'error': 'Dataset CSV not found'}, status=404)
+
+    created_count = 0
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for idx, row in enumerate(reader, start=1):
+            Product.objects.get_or_create(
+                title=row['title'],
+                price=row['price'],
+                category=row['category'],
+                defaults={
+                    'user': request.user,
+                    'thumbnail': f'{image_dir}/{idx}.avif',
+                    'stock': row.get('stock', 10),  # Default 10 if not provided
+                }
+            )
+            created_count += 1
+
+    return JsonResponse({'message': f'{created_count} products loaded successfully.'})
