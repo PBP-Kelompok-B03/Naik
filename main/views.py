@@ -19,6 +19,12 @@ from django.http import HttpResponseForbidden
 from main.forms import ProductForm
 from main.models import Product
 
+import csv, os
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.conf import settings
+from main.models import Product
+
 
 
 # @login_required(login_url='/login')
@@ -186,3 +192,39 @@ def delete_product(request, id):
     product.delete()
     messages.success(request, f"Product '{product.title}' has been deleted successfully!")
     return redirect('main:show_main')
+
+@user_passes_test(lambda u: u.is_superuser or u.profile.role == 'admin')
+def load_dataset(request):
+    csv_path = os.path.join(settings.BASE_DIR, 'static', 'data', 'products.csv')
+    image_dir = 'image/products'  # relative path inside static/
+
+    if not os.path.exists(csv_path):
+        return JsonResponse({'error': 'Dataset CSV not found'}, status=404)
+
+    created_count = 0
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for idx, row in enumerate(reader, start=1):
+            product_name = row.get('Product Name')
+            price = row.get('Price (IDR)')
+            category = row.get('Category')
+
+            if not product_name or not price:
+                continue  # skip invalid rows
+
+            # Clean price (e.g. "2.379.000" → 2379000)
+            price_clean = int(str(price).replace('.', '').replace(',', '').strip())
+
+            Product.objects.get_or_create(
+                title=product_name.strip(),
+                price=price_clean,
+                category=category.strip(),
+                defaults={
+                    'user': request.user,
+                    'thumbnail': f'{image_dir}/{idx}.avif',
+                    'stock': 10,
+                }
+            )
+            created_count += 1
+
+    return JsonResponse({'message': f'{created_count} products loaded successfully!'})
