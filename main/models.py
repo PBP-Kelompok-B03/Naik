@@ -18,6 +18,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default="Men's Shoes")
     thumbnail = models.ImageField(upload_to='image/products/temp/', null=True, blank=True)
+    count_sold = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=10)
 
     def __str__(self):
