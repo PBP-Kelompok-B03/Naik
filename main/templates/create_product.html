@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block meta %}
+<title>Create Product - Naik Product</title>
+{% endblock meta %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="bg-gray-50 min-h-screen flex items-center justify-center pt-20 pb-12">
+  <div class="w-full max-w-3xl bg-white shadow-lg rounded-2xl border border-gray-200 p-10">
+    
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 uppercase">Create Product</h1>
+      <p class="text-gray-500 mt-2 text-sm">Share your new drop with the Naik community</p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-8">
+      {% csrf_token %}
+        
+      <!-- Product Name -->
+      <div>
+        <label for="id_title" class="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+          Product Name
+        </label>
+        {{ form.title }}
+      </div>
+    
+      <!-- Price -->
+      <div>
+        <label for="id_price" class="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+          Price (IDR)
+        </label>
+        {{ form.price }}
+      </div>
+    
+      <!-- Category -->
+      <div>
+        <label for="id_category" class="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+          Category
+        </label>
+        {{ form.category }}
+      </div>
+    
+      <!-- Stock -->
+      <div>
+        <label for="id_stock" class="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+          Stock
+        </label>
+        {{ form.stock }}
+      </div>
+    
+      <!-- Thumbnail -->
+      <div>
+        <label for="id_thumbnail" class="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+          Upload Thumbnail (AVIF)
+        </label>
+        <div class="border-2 border-dashed border-gray-300 p-6 rounded-md text-center text-gray-500 hover:border-gray-400 transition cursor-pointer">
+          {{ form.thumbnail }}
+          <p class="text-xs mt-2 text-gray-400">Only .avif files are allowed</p>
+        </div>
+      </div>
+    
+      <!-- Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+        <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors text-center">
+          Cancel
+        </a>
+        <button type="submit" class="order-1 sm:order-2 flex-1 bg-black text-white px-6 py-3 rounded-md font-semibold hover:bg-gray-800 transition-all">
+          Publish Product
+        </button>
+      </div>
+    
+      {% if form.errors %}
+        <div class="bg-red-100 text-red-700 p-3 rounded-md mt-4">
+          <strong>Form errors:</strong>
+          <ul class="mt-2 text-sm">
+            {% for field, errors in form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- JS for image preview -->
+<script>
+function previewImage(event) {
+  const previewContainer = document.getElementById('preview-container');
+  const preview = document.getElementById('preview');
+  const file = event.target.files[0];
+
+  if (file && file.type === 'image/avif') {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+      previewContainer.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert('Please upload an .avif file');
+    event.target.value = '';
+    previewContainer.classList.add('hidden');
+  }
+}
+</script>
+{% endblock %}
