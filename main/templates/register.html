@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-white px-6">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 mb-3">Join Us</h1>
+      <p class="text-gray-500 text-sm">Create your <span class="font-semibold">Naik</span> account</p>
+    </div>
+
+    <form method="POST" class="space-y-5">
+      {% csrf_token %}
+
+      <!-- 🧠 Non-field errors (like password mismatch, duplicate username, etc.) -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-md">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Role -->
+      <div>
+        {{ form.role }}
+        {% if form.role.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.role.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Username -->
+      <div>
+        <input 
+          type="text" 
+          name="username" 
+          placeholder="Username"
+          value="{{ form.username.value|default:'' }}"
+          class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
+          required
+        >
+        {% if form.username.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div>
+        <input 
+          type="password" 
+          name="password1" 
+          placeholder="Password"
+          class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
+          required
+        >
+        {% if form.password1.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Confirm Password -->
+      <div>
+        <input 
+          type="password" 
+          name="password2" 
+          placeholder="Confirm Password"
+          class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-black focus:border-black text-gray-900 placeholder-gray-400 transition-all"
+          required
+        >
+        {% if form.password2.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <button 
+        type="submit"
+        class="w-full bg-black text-white font-semibold py-3 rounded-md hover:bg-gray-900 transition-all">
+        Create Account
+      </button>
+
+      <div class="text-center mt-6">
+        <p class="text-gray-500 text-sm">
+          Already have an account?
+          <a href="{% url 'main:login' %}" class="text-black font-semibold hover:underline">Sign In</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
