@@ -165,7 +165,7 @@ def logout_user(request):
 
 def edit_product(request, id):
     product = get_object_or_404(Product, pk=id)
-    form = ProductForm(request.POST or None, instance=product)
+    form = ProductForm(request.POST or None, request.FILES or None, instance=product)
     if form.is_valid() and request.method == 'POST':
         form.save()
         return redirect('main:show_main')
@@ -185,7 +185,7 @@ def delete_product(request, id):
         return HttpResponseForbidden("Buyers cannot delete products.")
 
     # Sellers can only delete their own
-    if request.user.profile.role == 'seller' and product.owner != request.user:
+    if request.user.profile.role == 'seller' and product.user != request.user:
         return HttpResponseForbidden("You can only delete your own products.")
 
     # Admins can delete anything, no restrictions
