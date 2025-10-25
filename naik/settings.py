@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'main',
     'checkout',
     'search',
+    'comments',
 ]
 
 MIDDLEWARE = [
