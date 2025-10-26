@@ -2,8 +2,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
+import logging
+import traceback
+from django.db import IntegrityError
 from main.models import Product
 from .models import Order, OrderItem
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -11,81 +16,84 @@ def checkout_view(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         product_id = request.POST.get("product_id")
         quantity = int(request.POST.get("quantity", 1))
+        address = request.POST.get("address", "Alamat default")
+        payment_method = request.POST.get("payment_method", "EWALLET")
+        shipping_type = request.POST.get("shipping_type", "BIASA")
+        insurance = request.POST.get("insurance") == "on"
+        note = request.POST.get("note", "")
+
         product = get_object_or_404(Product, id=product_id)
 
-        # Check if product is in stock
+        # === Cek stok ===
         if product.stock < quantity:
-            return JsonResponse({"status": "error", "message": "Stock not available"}, status=400)
+            return JsonResponse({"status": "error", "message": "Stok tidak mencukupi."}, status=400)
 
-        # Determine unit price based on product type
-        if product.is_auction:
-            # For auction: use highest bid
-            highest_bid = product.bids.order_by('-amount').first()
-            if highest_bid:
-                unit_price = highest_bid.amount
-            else:
-                unit_price = product.price  # fallback to base price if no bids
-        else:
-            # For regular products: use seller's price
-            unit_price = product.price
+        # === Hitung total dasar ===
+        total_price = Decimal(product.price) * quantity
 
-        # Calculate total with shipping and insurance
-        total_price = unit_price * quantity
-        shipping_type = request.POST.get("shipping_type", "BIASA")
+        # === Tambah biaya pengiriman ===
         if shipping_type == "CEPAT":
             total_price += Decimal("10000.00")
         elif shipping_type in ["SAMEDAY", "SAME_DAY"]:
             total_price += Decimal("20000.00")
-        
-        if request.POST.get("insurance") == "on":
+
+        # === Tambah biaya asuransi ===
+        if insurance:
             total_price += Decimal("5000.00")
 
-        # Create order
-        order = Order.objects.create(
-            user=request.user,
-            total_price=total_price,
-            address=request.POST.get("address", ""),
-            payment_method=request.POST.get("payment_method", "EWALLET"),
-            shipping_type=shipping_type,
-            insurance=request.POST.get("insurance") == "on",
-            note=request.POST.get("note", ""),
-            status="PAID"
-        )
+        # === Log values and create order safely ===
+        logger.info("About to create Order with these attributes:")
+        logger.info(" product_id=%r (type=%s)", product_id, type(product_id).__name__)
+        logger.info(" user=%r (type=%s)", request.user, type(request.user).__name__)
+        logger.info(" quantity=%r (type=%s)", quantity, type(quantity).__name__)
+        logger.info(" product.price=%r (type=%s)", product.price, type(product.price).__name__)
+        logger.info(" computed total_price=%r (type=%s)", total_price, type(total_price).__name__)
+        logger.info(" payment_method=%r, shipping_type=%r, insurance(raw)=%r, insurance_flag=%r", payment_method, shipping_type, request.POST.get("insurance"), insurance)
+        logger.info(" address=%r, note=%r", address, note)
 
-        # Create order item with correct unit price
+        try:
+            order = Order.objects.create(
+                user=request.user,
+                total_price=total_price,
+                address=address,
+                payment_method=payment_method,
+                shipping_type=shipping_type,
+                insurance=insurance,
+                note=note,
+                status="PAID",
+            )
+        except IntegrityError as ie:
+            logger.error("IntegrityError when creating Order: %s", ie)
+            logger.error(traceback.format_exc())
+            logger.error("POST data: %s", request.POST)
+            return JsonResponse({"status": "error", "message": "Gagal membuat order (IntegrityError)."}, status=500)
+
+        # === Simpan item ===
         OrderItem.objects.create(
             order=order,
             product=product,
             quantity=quantity,
-            price=unit_price  # Save the correct unit price
+            price=product.price,
         )
 
-        # Update product stock
+        # Kurangi stok
         product.stock -= quantity
         product.count_sold += quantity
         product.save()
 
         return JsonResponse({
             "status": "success",
-            "message": f"Order #{order.id} created successfully! Total: Rp{total_price:,.0f}",
+            "message": f"Order #{order.id} berhasil dibuat! Total: Rp{total_price:,.0f}",
             "order_id": order.id,
-            "total": str(total_price),
+            "total": str(order.total_price),
             "product_name": product.title,
         })
 
-    # Handle GET request
+    # === Handle GET ===
     product_id = request.GET.get("product_id")
     quantity = int(request.GET.get("quantity", 1))
     product = get_object_or_404(Product, id=product_id)
-
-    # Determine display price based on product type
-    if product.is_auction:
-        highest_bid = product.bids.order_by('-amount').first()
-        unit_price = highest_bid.amount if highest_bid else product.price
-    else:
-        unit_price = product.price
-
-    total_price = unit_price * quantity
+    total_price = Decimal(product.price) * quantity
 
     return render(request, "checkout/checkout.html", {
         "product": product,

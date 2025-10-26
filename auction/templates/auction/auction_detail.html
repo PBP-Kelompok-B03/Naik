@@ -79,7 +79,7 @@
                         {% for bid in bids %}
                             <div class="flex justify-between p-2 {% cycle 'bg-gray-50' '' %}">
                                 <span>{{ bid.user.username }}</span>
-                                <span class="font-medium">Rp {{ bid.amount|intcomma }}</span>
+                                <span class="font-medium">Rp {% if bid.amount %}{{ bid.amount|floatformat:2|intcomma }}{% else %}0.00{% endif %}</span>
                             </div>
                         {% empty %}
                             <p class="text-gray-500">No bids yet</p>

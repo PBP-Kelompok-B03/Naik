@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Max
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from main.models import Product
 from .models import Bid
 from django.urls import reverse
@@ -31,25 +31,51 @@ def auction_detail(request, product_id):
     bids = Bid.objects.filter(product=product).order_by('-amount')
     now = timezone.now()
 
-    # current highest bid
-    highest_bid = bids.first()
-    current_highest = highest_bid.amount if highest_bid else product.price
-
-    # min bid (safe fallback)
-    increment = product.auction_increment if product.auction_increment is not None else Decimal('1')
-    min_bid = (highest_bid.amount if highest_bid else product.price) + increment
-
-    auction_active = product.auction_end_time > now if product.auction_end_time else False
-
-    # determine winner after auction ends
+    # Initialize variables with default values
+    current_highest = Decimal('0')
+    min_bid = Decimal('0')
+    highest_bid = None
     is_winner = False
     checkout_url = ''
-    if not auction_active:
-        # prefer explicit auction_winner, fallback to highest_bid.user
-        winner_user = product.auction_winner or (highest_bid.user if highest_bid else None)
-        if winner_user and request.user.is_authenticated and winner_user == request.user:
-            is_winner = True
-            checkout_url = reverse('checkout:checkout_view') + f'?product_id={product.id}&quantity=1'
+    auction_active = False
+
+    try:
+        # Convert bids queryset to list and handle decimal conversion
+        bids_list = []
+        for bid in bids:
+            try:
+                amount = Decimal(str(bid.amount))
+                bid.amount = amount
+                bids_list.append(bid)
+            except (InvalidOperation, ValueError):
+                continue
+        
+        bids = bids_list  # Replace queryset with sanitized list
+        
+        # Get highest bid and calculate values
+        highest_bid = bids[0] if bids else None
+        current_highest = Decimal(str(highest_bid.amount)) if highest_bid else Decimal(str(product.price))
+
+        # min bid (safe fallback)
+        increment = Decimal(str(product.auction_increment)) if product.auction_increment is not None else Decimal('1')
+        min_bid = current_highest + increment
+
+        # Check if auction is active
+        auction_active = product.auction_end_time > now if product.auction_end_time else False
+
+        # determine winner after auction ends
+        if not auction_active:
+            # prefer explicit auction_winner, fallback to highest_bid.user
+            winner_user = product.auction_winner or (highest_bid.user if highest_bid else None)
+            if winner_user and request.user.is_authenticated and winner_user == request.user:
+                is_winner = True
+                checkout_url = reverse('checkout:checkout_view') + f'?product_id={product.id}&quantity=1'
+
+    except (InvalidOperation, AttributeError, ValueError):
+        # Fallback to product price if there's any decimal conversion error
+        current_highest = Decimal('0')
+        min_bid = Decimal(str(product.price))
+        bids = []  # Empty list if there's an error
 
     context = {
         'product': product,

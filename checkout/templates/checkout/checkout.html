@@ -103,7 +103,7 @@
         <select name="shipping_type" id="shippingType">
             <option value="BIASA">Biasa (Gratis)</option>
             <option value="CEPAT">Cepat (+Rp10.000)</option>
-            <option value="SAMEDAY">Same Day (+Rp20.000)</option>
+            <option value="SAME_DAY">Same Day (+Rp20.000)</option>
         </select>
 
         <div class="insurance-row">
@@ -114,8 +114,9 @@
         <label>Catatan Tambahan:</label>
         <textarea name="note" placeholder="Contoh: tolong bungkus rapi"></textarea>
 
-        <label>Total Harga:</label>
-        <input type="text" name="total_price" id="totalInput" value="Rp{{ total_price|floatformat:0 }}" readonly>
+    <label>Total Harga:</label>
+    <!-- Visible total is for display only; do NOT include a name so it won't be submitted (server computes final total) -->
+    <input type="text" id="totalInput" value="Rp{{ total_price|floatformat:0 }}" readonly>
 
         <div class="price-display" id="priceDisplay">
             Total: Rp{{ total_price|floatformat:0 }}
@@ -152,23 +153,44 @@
     shippingSelect.addEventListener("change", updateTotal);
 
     const form = document.getElementById("checkoutForm");
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", async function(e) {
         e.preventDefault();
         const formData = new FormData(form);
-        fetch("", {
-            method: "POST",
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === "success") {
-                window.location.href = `/checkout/success/`;
+
+        // Build a POST URL that preserves querystring (product_id, quantity)
+        const postUrl = window.location.pathname + window.location.search;
+
+        try {
+            const res = await fetch(postUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    window.location.href = '/checkout/success/';
+                    return;
+                }
+                // show server message or debug info
+                const msg = (data && (data.message || data.debug)) || 'Checkout gagal!';
+                alert(msg);
             } else {
-                alert(data.message || "Checkout gagal!");
+                // server returned non-JSON (likely an HTML error page). log for debugging
+                const text = await res.text();
+                console.error('Server returned non-JSON response:', text);
+                alert('Terjadi kesalahan server. Silakan cek console dan server logs.');
             }
-        })
-        .catch(err => console.error("Error:", err));
+        } catch (err) {
+            console.error('Network or parse error:', err);
+            alert('Gagal menghubungi server. Periksa koneksi atau lihat console untuk detail.');
+        }
     });
 </script>
 </body>
