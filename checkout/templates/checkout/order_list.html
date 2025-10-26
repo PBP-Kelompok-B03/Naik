@@ -225,16 +225,68 @@
 
                         <!-- FORM Tambah komentar (hanya jika user pemilik order && order.status sesuai) -->
                         {% if order.status == 'COMPLETED' or order.status == 'PAID' and request.user.is_authenticated and order.user == request.user %}
-                        <form class="comment-form" action="{% url 'comments:create_comment' %}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="order_item_id" value="{{ item.id }}">
-                            <textarea name="content" placeholder="Tulis komentar/ulasan tentang produk ini..."></textarea>
-                            <div style="display:flex; flex-direction:column; gap:8px;">
-                                <input type="number" name="rating" min="1" max="5" placeholder="Rating">
-                                <button class="btn" type="submit">Kirim</button>
-                            </div>
-                        </form>
+                            {% with existing_comment=item.comments.first %}
+                                {# --- KOMENTAR: UPDATE / CREATE BLOCK --- #}
+                                {% if existing_comment and existing_comment.author == request.user %}
+                                    <!-- FORM untuk UPDATE -->
+                                    <form class="comment-form" action="{% url 'comments:edit_comment' existing_comment.id %}" method="post" style="display:flex; flex-direction:column; gap:10px;">
+                                        {% csrf_token %}
+                                        <!-- textarea di atas -->
+                                        <textarea name="content" placeholder="Tulis komentar/ulasan tentang produk ini..." 
+                                                style="width:94%; min-height:90px; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-family:inherit;">{{ existing_comment.content }}</textarea>
+
+                                        <!-- baris bawah: rating | Update | Hapus (sama besar) -->
+                                        <div style="display:flex; gap:8px;">
+                                            <!-- rating (sama ukuran) -->
+                                            <input type="number" name="rating" min="1" max="5" value="{{ existing_comment.rating }}"
+                                                style="flex:1; padding:10px; border-radius:8px; border:1px solid #d1d5db; text-align:center; font-size:1rem;">
+
+                                            <!-- update button (submit) -->
+                                            <button type="submit" class="btn" 
+                                                    style="flex:1; background-color:#2563eb; color:white; border:none; padding:10px; border-radius:8px; font-weight:600;">
+                                                Update
+                                            </button>
+
+                                            <!-- delete button (JS) -->
+                                            <!-- <button type="button" onclick="deleteComment({{ existing_comment.id }}, '{% url 'comments:delete_comment' existing_comment.id %}')" 
+                                                    style="flex:1; background-color:#ef4444; color:white; border:none; padding:10px; border-radius:8px; font-weight:600;">
+                                                Hapus
+                                            </button> -->
+                                            <a href="{% url 'comments:delete_comment' existing_comment.id %}" style="flex:1; background-color:#ef4444; color:white; border:none; padding:10px; border-radius:8px; font-weight:600;"
+                                            onclick="return confirm('Apakah kamu yakin ingin menghapus komentar ini?');">
+                                            Hapus
+                                            </a>
+                                        </div>
+                                    </form>
+
+                                {% else %}
+                                    <!-- FORM untuk CREATE (kosong) -->
+                                    <form class="comment-form" action="{% url 'comments:create_comment' %}" method="post" style="display:flex; flex-direction:column; gap:10px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="order_item_id" value="{{ item.id }}">
+
+                                        <!-- textarea di atas -->
+                                        <textarea name="content" placeholder="Tulis komentar/ulasan tentang produk ini..." 
+                                                style="width:100%; min-height:90px; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-family:inherit;"></textarea>
+
+                                        <!-- baris bawah: rating | Kirim | spacer (agar lebar sama) -->
+                                        <div style="display:flex; gap:8px;">
+                                            <input type="number" name="rating" min="1" max="5" placeholder="Rating"
+                                                style="flex:1; padding:10px; border-radius:8px; border:1px solid #d1d5db; text-align:center; font-size:1rem;">
+
+                                            <button type="submit" class="btn" 
+                                                    style="flex:1; background-color:#2563eb; color:white; border:none; padding:10px; border-radius:8px; font-weight:600;">
+                                                Kirim
+                                            </button>
+
+                                            <!-- spacer untuk menjaga layout agar konsisten; bisa dihapus jika tidak diinginkan -->
+                                            <div style="flex:1;"></div>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            {% endwith %}
                         {% endif %}
+
 
                         <!-- FORM Balasan (hanya tampil jika current user adalah seller/owner produk) -->
                         {% with product=item.product %}

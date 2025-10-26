@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Edit Balasan - Naik Product</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg w-full bg-white rounded-xl shadow-md p-8 border border-gray-200">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Edit Balasan Komentar
+        </h1>
+
+        <form method="post" action="{% url 'comments:edit_reply' reply.id %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="content" class="block text-gray-700 font-medium mb-2">Isi Balasan:</label>
+                <textarea 
+                    id="content" 
+                    name="content" 
+                    rows="4" 
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>{{ reply.content }}</textarea>
+            </div>
+
+            <div class="flex justify-between items-center mt-6">
+                <a href="{% url 'main:show_product' reply.comment.product.id %}" 
+                   class="text-gray-600 hover:text-gray-900 text-sm transition">
+                    ← Kembali ke Produk
+                </a>
+                <button type="submit" formaction="{% url 'main:show_product' reply.comment.product.id %}"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
