@@ -1,0 +1,360 @@
+{% extends "base_chat.html" %}
+{% load static %}
+{% block title %}Naik Chat{% endblock %}
+{% block content %}
+<div style="margin-top: 80px;">  
+
+<style>
+/* ===== Layout utama ===== */
+.chat-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: #222;
+  font-size: 14px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8f8f8;
+}
+
+/* ===== Header ===== */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* ===== Container pesan ===== */
+.chat-container-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f9f9f9;
+}
+
+#messages {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding: 20px 20px 16px;
+  background: #f9f9f9;
+  font-size: 13.5px;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+}
+
+/* ===== Bubble ===== */
+.message-row {
+  display: flex;
+  width: 100%;
+  padding: 0 8px;
+  margin-bottom: 10px;
+  align-items: flex-end;
+}
+.message-row.left  { justify-content: flex-start; }
+.message-row.right { justify-content: flex-end; }
+
+.bubble {
+  max-width: 72%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-break: break-word;
+  display: inline-block;
+  background: #ffffff;
+  color: #222;
+  font-size: 13.5px;
+  line-height: 1.4;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Bubble user sendiri */
+.bubble.me {
+  background: #e6f0ff;
+  border: 1px solid #b5c9ff;
+  color: #0b1a44;
+}
+
+/* Text & time */
+.bubble .text { white-space: pre-wrap; display:block; margin-bottom:6px; }
+.bubble .time { font-size: 11px; color: #777; text-align: right; }
+
+/* Image */
+.bubble img { max-width: 100%; border-radius: 8px; display:block; margin-bottom:6px; }
+
+/* ===== Input area ===== */
+.chat-input-area {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px 16px;
+  border-top: 1px solid #ddd;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+}
+
+.chat-input-area form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-input-area textarea {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #222;
+  resize: none;
+  min-height: 46px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.chat-input-area textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+.chat-input-area button {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  transition: background 0.2s;
+}
+
+.chat-input-area button:hover {
+  background: #2563eb;
+}
+
+#attach-btn {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#attach-btn:hover {
+  background: #e4e4e4;
+}
+
+#attached-file {
+  color: #666;
+  font-size: 12px;
+  min-height: 16px;
+  padding-left: 6px;
+}
+
+/* Responsif */
+@media (max-width:480px) {
+  #messages { padding: 12px; }
+  .bubble { max-width: 86%; padding: 8px 10px; font-size: 13px; }
+}
+</style>
+
+<div class="chat-page">
+
+  <!-- HEADER -->
+  <div class="chat-header">
+    <a href="{% url 'chat:conversation_list' %}" title="Kembali"
+       style="display:inline-flex; align-items:center; text-decoration:none; color:#222;">
+      <img src="{% static 'image/back_arrow2.png' %}" alt="back" style="height:26px; width:26px; margin-right:6px;">
+    </a>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="avatar large" style="
+        width:40px; height:40px; border-radius:8px;
+        background:#dbeafe; display:flex; align-items:center;
+        justify-content:center; font-weight:700; color:#1e3a8a;
+      ">
+        {{ other.username|slice:":1"|upper }}
+      </div>
+      <div>
+        <div style="font-weight:700; color:#111;">{{ other.username }}</div>
+        {% if other.email %}
+          <div style="font-size:12px; color:#666;">{{ other.email }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="chat-container-inner">
+    <div id="messages" aria-live="polite"></div>
+
+    <div class="chat-input-area">
+      <div id="attached-file"></div>
+
+      <form id="send-form">
+        <label for="image-input" id="attach-btn">
+          <img src="{% static 'image/attach_file2.png' %}" alt="attach" style="height:22px; width:22px;">
+        </label>
+        <input id="image-input" name="image" type="file" accept="image/*" style="display:none;">
+
+        <textarea id="content" name="content" placeholder="Ketik pesan..."></textarea>
+
+        <button id="send-btn" type="submit">Kirim</button>
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const CURRENT_USER_ID = Number('{{ request.user.id|default:"0" }}');
+const fetchUrl = "{% url 'chat:api_fetch_messages' convo.id %}";
+const sendUrl = "{% url 'chat:api_send_message' convo.id %}";
+const messagesDiv = document.getElementById('messages');
+const contentEl = document.getElementById('content');
+const imageInput = document.getElementById('image-input');
+const attachedFileEl = document.getElementById('attached-file');
+let userScrolledUp = false;
+
+if (imageInput) {
+  imageInput.addEventListener('change', () => {
+    attachedFileEl.textContent = imageInput.files[0]?.name || '';
+  });
+}
+
+if (messagesDiv) {
+  messagesDiv.addEventListener('scroll', () => {
+    const nearBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < 100;
+    userScrolledUp = !nearBottom;
+  });
+}
+
+function isoToLocal(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+}
+
+function renderMessages(messages) {
+  if (!messagesDiv) return;
+  messagesDiv.innerHTML = '';
+  messages = messages || [];
+
+  messagesDiv.style.justifyContent = messages.length <= 1 ? 'flex-start' : 'flex-end';
+
+  for (const m of messages) {
+    const isMine = String(m.sender_id) === String(CURRENT_USER_ID);
+    const row = document.createElement('div');
+    row.className = 'message-row ' + (isMine ? 'right' : 'left');
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble' + (isMine ? ' me' : '');
+
+    if (m.image_url) {
+      const img = document.createElement('img');
+      img.src = m.image_url;
+      img.alt = 'image';
+      bubble.appendChild(img);
+    }
+
+    if (m.content) {
+      const textDiv = document.createElement('div');
+      textDiv.className = 'text';
+      textDiv.textContent = m.content;
+      bubble.appendChild(textDiv);
+    }
+
+    const timeVal = m.created_at || m.timestamp || m.created || '';
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'time';
+    timeDiv.textContent = isoToLocal(timeVal);
+    bubble.appendChild(timeDiv);
+
+    row.appendChild(bubble);
+    messagesDiv.appendChild(row);
+  }
+
+  try {
+    if (messages.length <= 1) {
+      messagesDiv.scrollTop = 0;
+    } else if (!userScrolledUp) {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  } catch {}
+}
+
+async function fetchMessages() {
+  if (!fetchUrl) return;
+  try {
+    const res = await fetch(fetchUrl, { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderMessages(data.messages || []);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function getCsrfTokenFromDomOrCookie() {
+  const el = document.querySelector('input[name=csrfmiddlewaretoken]');
+  if (el && el.value) return el.value;
+  const c = document.cookie.split(';').map(s=>s.trim()).find(s=>s.startsWith('csrftoken='));
+  if (c) return decodeURIComponent(c.split('=')[1]);
+  return '{{ csrf_token }}';
+}
+
+async function sendMessage() {
+  if (!sendUrl) return;
+  const text = contentEl.value.trim();
+  const file = imageInput?.files?.[0];
+  if (!text && !file) return;
+
+  const fd = new FormData();
+  const csrftok = getCsrfTokenFromDomOrCookie();
+  if (csrftok) fd.append('csrfmiddlewaretoken', csrftok);
+  if (text) fd.append('content', text);
+  if (file) fd.append('image', file);
+
+  try {
+    const res = await fetch(sendUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
+    if (res.ok) {
+      contentEl.value = '';
+      if (imageInput) imageInput.value = '';
+      attachedFileEl.textContent = '';
+      await fetchMessages();
+    } else {
+      console.error('send failed', res.status);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+document.getElementById('send-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  sendMessage();
+});
+
+contentEl?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+fetchMessages();
+setInterval(fetchMessages, 2000);
+</script>
+{% endblock %}

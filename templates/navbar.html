@@ -17,7 +17,7 @@
     <div class="hidden md:flex items-center space-x-8">
       <a href="{% url 'search:search_products' %}" class="text-gray-300 hover:text-gray-100 font-medium transition-colors">Search Product</a>
       <a href="/" class="text-gray-300 hover:text-gray-100 font-medium transition-colors">Auction</a>
-      <a href="/" class="text-gray-300 hover:text-gray-100 font-medium transition-colors">Chat</a>
+      <a href="{% url 'chat:conversation_list' %}" class="text-gray-300 hover:text-gray-100 font-medium transition-colors">Chat</a>
       {% if user.profile.role == 'seller' or user.profile.role == 'admin' %}
         <a href="{% url 'main:create_product' %}" class="text-gray-300 hover:text-gray-100 font-medium transition-colors">Create Product</a>
       {% elif user.profile.role == 'buyer' %}

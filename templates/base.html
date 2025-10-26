@@ -14,7 +14,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/global.css' %}" />
   </head>
-  <body>
+  <body class="bg-gray-50 min-h-screen">
+    {% include 'navbar.html' %}
     {% block content %}{% endblock content %}
   </body>
 </html>

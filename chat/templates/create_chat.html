@@ -1,0 +1,21 @@
+{% extends "base_chat.html" %}
+{% load static %}
+{% block title %}Naik Chat{% endblock %}
+{% block content %}
+<div style="margin-top: 80px;">  
+<div style="max-width:720px; margin:0 auto; color:#fff; background:#0f0f0f; padding:20px; border-radius:10px;">
+  <h3 style="margin-top:0; margin-bottom:12px;">Create New Messages</h3>
+
+  <form method="post" action="{% url 'chat:create_conversation' %}">
+    {% csrf_token %}
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input name="other_username" type="text" placeholder="Enter the username of the person you want to contact." required
+             style="padding:10px; border-radius:8px; border:1px solid #333; background:#111; color:#fff; flex:1;" />
+      <button type="submit" style="padding:10px 14px; border-radius:8px; background:#5a5a5a; color:#fff; border:none; font-weight:600;">
+        Create Chat
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
