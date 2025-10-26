@@ -5,13 +5,15 @@
 {% endblock meta %}
 
 {% block content %}
-<div class="container mx-auto mt-24 bg-white rounded-xl shadow-lg p-8 max-w-6xl">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Daftar Pesanan Saya</h1>
+<div class="container mx-auto mt-24 bg-gray-900 rounded-2xl shadow-xl p-10 max-w-6xl text-gray-100">
+  <h1 class="text-3xl font-extrabold text-center text-white mb-10 uppercase tracking-wide">
+    Daftar Pesanan Saya
+  </h1>
 
   {% if orders %}
-  <div class="overflow-x-auto">
-    <table class="w-full border-collapse rounded-lg overflow-hidden">
-      <thead class="bg-blue-600 text-white">
+  <div class="overflow-x-auto rounded-xl border border-gray-700">
+    <table class="w-full border-collapse">
+      <thead class="bg-gray-700 text-gray-100 uppercase text-sm">
         <tr>
           <th class="py-3 px-4 text-left">ID</th>
           <th class="py-3 px-4 text-left">Produk</th>
@@ -23,19 +25,19 @@
           <th class="py-3 px-4 text-left">Tanggal</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-gray-700">
         {% for order in orders %}
-        <tr class="hover:bg-gray-50 transition">
-          <td class="py-3 px-4 font-semibold">#{{ order.id }}</td>
-          <td class="py-3 px-4">
+        <tr class="hover:bg-gray-700/40 transition">
+          <td class="py-3 px-4 font-semibold text-gray-100">#{{ order.id }}</td>
+          <td class="py-3 px-4 align-top">
             {% for item in order.items.all %}
-            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div class="mb-4 p-3 bg-gray-800 border border-gray-700 rounded-lg">
               <strong>
-                <a href="{% url 'main:show_product' item.product.id %}" class="text-blue-700 hover:underline">
+                <a href="{% url 'main:show_product' item.product.id %}" class="text-green-400 hover:underline">
                   {{ item.product.title }}
                 </a>
               </strong>
-              <p class="text-sm text-gray-600">
+              <p class="text-sm text-gray-400">
                 Jumlah: {{ item.quantity }} | Harga: Rp{{ item.price|floatformat:0 }}
               </p>
 
@@ -44,25 +46,25 @@
               {% endif %}
 
               <!-- Komentar -->
-              <div class="mt-2 space-y-2">
+              <div class="mt-3 space-y-2">
                 {% for c in item.comments.all %}
-                <div class="bg-white border rounded-lg p-3 shadow-sm">
-                  <div class="flex justify-between text-sm text-gray-600">
-                    <span><strong>{{ c.author.username }}</strong>{% if c.rating %} · Rating: {{ c.rating }}/5{% endif %}</span>
+                <div class="bg-gray-700 border border-gray-600 rounded-lg p-3">
+                  <div class="flex justify-between text-sm text-gray-400">
+                    <span><strong class="text-gray-200">{{ c.author.username }}</strong>{% if c.rating %} · ⭐ {{ c.rating }}/5{% endif %}</span>
                     <span>{{ c.created_at|date:"d M Y, H:i" }}</span>
                   </div>
-                  <p class="text-gray-800 mt-1">{{ c.content }}</p>
+                  <p class="text-gray-200 mt-1">{{ c.content }}</p>
 
                   {% for r in c.replies.all %}
-                  <div class="ml-4 mt-2 p-2 bg-indigo-50 rounded-md text-sm">
-                    <div class="font-semibold">{{ r.author.username }} (penjual)</div>
+                  <div class="ml-4 mt-2 p-2 bg-gray-800 border border-gray-700 rounded-md text-sm">
+                    <div class="font-semibold text-green-400">{{ r.author.username }} (penjual)</div>
                     <div>{{ r.content }}</div>
                     <div class="text-gray-500 text-xs mt-1">{{ r.created_at|date:"d M Y, H:i" }}</div>
                   </div>
                   {% endfor %}
                 </div>
                 {% empty %}
-                <p class="text-gray-400 text-sm">Belum ada komentar untuk item ini.</p>
+                <p class="text-gray-500 text-sm">Belum ada komentar untuk item ini.</p>
                 {% endfor %}
               </div>
 
@@ -70,10 +72,12 @@
               <form class="mt-3 space-y-2" action="{% url 'comments:create_comment' %}" method="post">
                 {% csrf_token %}
                 <input type="hidden" name="order_item_id" value="{{ item.id }}">
-                <textarea name="content" placeholder="Tulis komentar..." class="w-full border rounded-lg p-2 text-sm"></textarea>
+                <textarea name="content" placeholder="Tulis komentar..." class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-gray-100 placeholder-gray-400"></textarea>
                 <div class="flex items-center gap-2">
-                  <input type="number" name="rating" min="1" max="5" placeholder="Rating" class="border rounded-lg px-2 py-1 w-16">
-                  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Kirim</button>
+                  <input type="number" name="rating" min="1" max="5" placeholder="Rating" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 w-16 text-gray-100">
+                  <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+                    Kirim
+                  </button>
                 </div>
               </form>
               {% endif %}
@@ -83,8 +87,8 @@
                 {% for c in item.comments.all %}
                 <form action="{% url 'comments:reply_comment' c.id %}" method="post" class="mt-2 flex gap-2">
                   {% csrf_token %}
-                  <textarea name="content" placeholder="Balas komentar..." class="flex-1 border rounded-lg p-2 text-sm"></textarea>
-                  <button type="submit" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-lg text-sm">Balas</button>
+                  <textarea name="content" placeholder="Balas komentar..." class="flex-1 bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm text-gray-100 placeholder-gray-400"></textarea>
+                  <button type="submit" class="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-lg text-sm text-white transition">Balas</button>
                 </form>
                 {% endfor %}
               {% endif %}
@@ -92,21 +96,21 @@
             </div>
             {% endfor %}
           </td>
-          <td class="py-3 px-4">{{ order.get_payment_method_display }}</td>
-          <td class="py-3 px-4">{{ order.get_shipping_type_display }}</td>
-          <td class="py-3 px-4">{{ order.insurance|yesno:"Ya,Tidak" }}</td>
-          <td class="py-3 px-4 font-semibold">Rp{{ order.total_price|floatformat:0 }}</td>
+          <td class="py-3 px-4 text-gray-300">{{ order.get_payment_method_display }}</td>
+          <td class="py-3 px-4 text-gray-300">{{ order.get_shipping_type_display }}</td>
+          <td class="py-3 px-4">{{ order.insurance|yesno:"✅,❌" }}</td>
+          <td class="py-3 px-4 font-semibold text-green-400">Rp{{ order.total_price|floatformat:0 }}</td>
           <td class="py-3 px-4">
             <span class="px-2 py-1 rounded-md text-sm font-semibold
-              {% if order.status == 'PAID' %}bg-green-100 text-green-700
-              {% elif order.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-              {% elif order.status == 'SHIPPED' %}bg-blue-100 text-blue-700
-              {% elif order.status == 'COMPLETED' %}bg-emerald-100 text-emerald-700
-              {% else %}bg-red-100 text-red-700{% endif %}">
+              {% if order.status == 'PAID' %}bg-green-500/20 text-green-400
+              {% elif order.status == 'PENDING' %}bg-yellow-500/20 text-yellow-400
+              {% elif order.status == 'SHIPPED' %}bg-blue-500/20 text-blue-400
+              {% elif order.status == 'COMPLETED' %}bg-emerald-500/20 text-emerald-400
+              {% else %}bg-red-500/20 text-red-400{% endif %}">
               {{ order.status }}
             </span>
           </td>
-          <td class="py-3 px-4 text-sm text-gray-500">{{ order.created_at|date:"d M Y, H:i" }}</td>
+          <td class="py-3 px-4 text-sm text-gray-400">{{ order.created_at|date:"d M Y, H:i" }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -116,8 +120,8 @@
   <p class="text-center text-gray-500 py-8">Belum ada pesanan yang dibuat.</p>
   {% endif %}
 
-  <div class="text-center mt-6">
-    <a href="{% url 'main:show_main' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+  <div class="text-center mt-8">
+    <a href="{% url 'main:show_main' %}" class="inline-block bg-white hover:bg-gray-300 text-black px-6 py-2 rounded-xl font-semibold uppercase tracking-wide transition transform hover:-translate-y-1 hover:shadow-lg">
       ← Kembali ke Beranda
     </a>
   </div>
