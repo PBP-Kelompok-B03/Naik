@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Chat | Naik Store</title>
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock meta %}
+
+{% block content %}
+<div class="container" style="padding:18px;">
+  {% block chat_content %}{% endblock %}
+</div>
+{% endblock content %}

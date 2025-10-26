@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'checkout',
     'search',
     'comments',
+    'chat',
 ]
 
 MIDDLEWARE = [
