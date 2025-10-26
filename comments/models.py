@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ValidationError
@@ -13,7 +14,7 @@ class Comment(models.Model):
     - parent bisa dipakai bila ingin threading (reply as child comment). Namun aku sarankan
       memakai model Reply terpisah bila hanya penjual yang bisa membalas.
     """
-    id = models.UUIDField(primary_key=True, null=False, editable=False)
+    id = models.UUIDField(primary_key=True, null=False, editable=False, default=uuid.uuid4)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comments')
     order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name='comments')
@@ -51,6 +52,7 @@ class Reply(models.Model):
     Balasan yang dibuat (biasanya) oleh Penjual terhadap Comment.
     Dipisah agar lebih jelas: hanya comments yang dapat direply, dan replies punya author sendiri (seller).
     """
+    id = models.UUIDField(primary_key=True, null=False, editable=False, default=uuid.uuid4)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="replies")
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="replies")
     content = models.TextField()
