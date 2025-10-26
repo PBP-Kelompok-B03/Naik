@@ -5,125 +5,142 @@
 {% endblock meta %}
 
 {% block content %}
-<div class="flex justify-center items-center min-h-screen bg-gray-50">
-  <div class="card bg-white p-8 rounded-xl shadow-lg w-[400px]">
-    <h1 class="text-center text-2xl font-bold text-gray-800 mb-4">Checkout</h1>
+<div class="flex justify-center items-center min-h-screen bg-gray-900 py-10">
+  <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md p-8 transition transform hover:scale-[1.01]">
+    
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold tracking-tight text-white uppercase">Checkout</h1>
+      <p class="text-gray-400 text-sm mt-1">Selesaikan pesananmu dengan cepat & aman</p>
+      <div class="mt-4 w-20 h-1 bg-white mx-auto rounded"></div>
+    </div>
 
-    <form id="checkoutForm">
-        {% csrf_token %}
-        <input type="hidden" name="product_id" value="{{ product.id }}">
-        <input type="hidden" name="quantity" value="{{ quantity }}">
+    <!-- Form -->
+    <form id="checkoutForm" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="hidden" name="quantity" value="{{ quantity }}">
 
-        <label class="font-semibold">Nama Produk:</label>
-        <input type="text" value="{{ product.title }}" readonly class="border rounded px-3 py-2 w-full mb-3">
+      <!-- Product Info -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Nama Produk</label>
+        <input type="text" value="{{ product.title }}" readonly
+               class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+      </div>
 
-        <label class="font-semibold">Jumlah:</label>
-        <input type="number" value="{{ quantity }}" readonly class="border rounded px-3 py-2 w-full mb-3">
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Jumlah</label>
+        <input type="number" value="{{ quantity }}" readonly
+               class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+      </div>
 
-        <label class="font-semibold">Alamat Pengiriman:</label>
-        <textarea name="address" placeholder="Masukkan alamat lengkap" required class="border rounded px-3 py-2 w-full mb-3"></textarea>
+      <!-- Address -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Alamat Pengiriman</label>
+        <textarea name="address" placeholder="Masukkan alamat lengkap" required
+                  class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"></textarea>
+      </div>
 
-        <label class="font-semibold">Metode Pembayaran:</label>
-        <select name="payment_method" class="border rounded px-3 py-2 w-full mb-3">
-            <option value="COD">Cash on Delivery</option>
-            <option value="TRANSFER">Transfer Bank</option>
-            <option value="EWALLET" selected>E-Wallet</option>
+      <!-- Payment Method -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Metode Pembayaran</label>
+        <select name="payment_method"
+                class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+          <option value="COD">Cash on Delivery</option>
+          <option value="TRANSFER">Transfer Bank</option>
+          <option value="EWALLET" selected>E-Wallet</option>
         </select>
+      </div>
 
-        <label class="font-semibold">Jenis Pengiriman:</label>
-        <select name="shipping_type" id="shippingType" class="border rounded px-3 py-2 w-full mb-3">
-            <option value="BIASA">Biasa (Gratis)</option>
-            <option value="CEPAT">Cepat (+Rp10.000)</option>
-            <option value="SAME_DAY">Same Day (+Rp20.000)</option>
+      <!-- Shipping -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Jenis Pengiriman</label>
+        <select name="shipping_type" id="shippingType"
+                class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+          <option value="BIASA">Biasa (Gratis)</option>
+          <option value="CEPAT">Cepat (+Rp10.000)</option>
+          <option value="SAMEDAY">Same Day (+Rp20.000)</option>
         </select>
+      </div>
 
-        <div class="flex justify-between items-center border border-gray-300 rounded p-3 bg-gray-50 mb-3">
-            <span>Tambahkan Asuransi Barang (+Rp5.000)</span>
-            <input type="checkbox" id="insurance" name="insurance" class="w-5 h-5">
-        </div>
+      <!-- Insurance -->
+      <div class="flex justify-between items-center border border-gray-600 rounded-lg px-4 py-3 bg-gray-700 hover:bg-gray-600 transition">
+        <span class="text-sm text-gray-200 font-medium">Tambahkan Asuransi Barang (+Rp5.000)</span>
+        <input type="checkbox" id="insurance" name="insurance" class="w-5 h-5 accent-white">
+      </div>
 
-        <label class="font-semibold">Catatan Tambahan:</label>
-        <textarea name="note" placeholder="Contoh: tolong bungkus rapi" class="border rounded px-3 py-2 w-full mb-3"></textarea>
+      <!-- Notes -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Catatan Tambahan</label>
+        <textarea name="note" placeholder="Contoh: tolong bungkus rapi"
+                  class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"></textarea>
+      </div>
 
-        <label>Total Harga:</label>
-        <input type="text" name="total_price" id="totalInput" value="Rp{{ total_price|floatformat:0 }}" readonly>
+      <!-- Total -->
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Total Harga</label>
+        <input type="text" name="total_price" id="totalInput" 
+               value="Rp{{ total_price|floatformat:0 }}" readonly
+               class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white font-semibold text-left">
+      </div>
 
-        <div id="priceDisplay" class="text-right text-blue-600 font-semibold mb-4">
-            Total: Rp{{ total_price|floatformat:0 }}
-        </div>
+      <div id="priceDisplay" class="text-right text-lg text-white font-bold mt-2">
+        Total: Rp{{ total_price|floatformat:0 }}
+      </div>
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold transition">
-            Bayar Sekarang
-        </button>
+      <!-- Submit -->
+      <button type="submit"
+              class="w-full mt-6 bg-white hover:bg-gray-300 text-black py-3 rounded-xl font-bold tracking-wide uppercase transition transform hover:-translate-y-1 hover:shadow-lg">
+        Bayar Sekarang
+      </button>
     </form>
   </div>
 </div>
 
+<!-- Script -->
 <script>
-    const baseTotal = parseFloat("{{ total_price }}");
-    const insuranceCheckbox = document.getElementById("insurance");
-    const shippingSelect = document.getElementById("shippingType");
-    const totalInput = document.getElementById("totalInput");
-    const totalDisplay = document.getElementById("priceDisplay");
+  const baseTotal = parseFloat("{{ total_price }}");
+  const insuranceCheckbox = document.getElementById("insurance");
+  const shippingSelect = document.getElementById("shippingType");
+  const totalInput = document.getElementById("totalInput");
+  const totalDisplay = document.getElementById("priceDisplay");
 
-    function formatRupiah(num) {
-        return "Rp" + num.toLocaleString("id-ID");
-    }
+  function formatRupiah(num) {
+    return "Rp" + num.toLocaleString("id-ID");
+  }
 
-    function updateTotal() {
-        let finalTotal = baseTotal;
-        const shipping = shippingSelect.value;
+  function updateTotal() {
+    let finalTotal = baseTotal;
+    const shipping = shippingSelect.value;
+    if (shipping === "CEPAT") finalTotal += 10000;
+    if (shipping === "SAMEDAY") finalTotal += 20000;
+    if (insuranceCheckbox.checked) finalTotal += 5000;
 
-        if (shipping === "CEPAT") finalTotal += 10000;
-        if (shipping === "SAMEDAY") finalTotal += 20000;
-        if (insuranceCheckbox.checked) finalTotal += 5000;
+    totalInput.value = formatRupiah(finalTotal);
+    totalDisplay.textContent = `Total: ${formatRupiah(finalTotal)}`;
+  }
 
-        totalInput.value = formatRupiah(finalTotal);
-        totalDisplay.textContent = `Total: ${formatRupiah(finalTotal)}`;
-    }
+  insuranceCheckbox.addEventListener("change", updateTotal);
+  shippingSelect.addEventListener("change", updateTotal);
 
-    insuranceCheckbox.addEventListener("change", updateTotal);
-    shippingSelect.addEventListener("change", updateTotal);
-
-    const form = document.getElementById("checkoutForm");
-    form.addEventListener("submit", async function(e) {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        // Build a POST URL that preserves querystring (product_id, quantity)
-        const postUrl = window.location.pathname + window.location.search;
-
-        try {
-            const res = await fetch(postUrl, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: formData,
-                credentials: 'same-origin'
-            });
-
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                const data = await res.json();
-                if (res.ok && data.status === 'success') {
-                    window.location.href = '/checkout/success/';
-                    return;
-                }
-                // show server message or debug info
-                const msg = (data && (data.message || data.debug)) || 'Checkout gagal!';
-                alert(msg);
-            } else {
-                // server returned non-JSON (likely an HTML error page). log for debugging
-                const text = await res.text();
-                console.error('Server returned non-JSON response:', text);
-                alert('Terjadi kesalahan server. Silakan cek console dan server logs.');
-            }
-        } catch (err) {
-            console.error('Network or parse error:', err);
-            alert('Gagal menghubungi server. Periksa koneksi atau lihat console untuk detail.');
-        }
-    });
+  const form = document.getElementById("checkoutForm");
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    fetch("", {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === "success") {
+        window.location.href = `/checkout/success/`;
+      } else {
+        alert(data.message || "Checkout gagal!");
+      }
+    })
+    .catch(err => console.error("Error:", err));
+  });
 </script>
 {% endblock content %}
