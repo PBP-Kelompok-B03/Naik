@@ -100,7 +100,6 @@
                 Auction has ended
             </div>
 
-            {# show checkout button only for the winner #}
             {% if is_winner %}
             <div class="mb-6">
                 <a href="{{ checkout_url }}" 
@@ -112,6 +111,81 @@
             {% endif %}
         </div>
         {% endif %}
+
+        <!-- Comments Section -->
+        <section class="mt-8">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Ulasan & Komentar ({{ product.comments.count }})</h2>
+
+                {% if messages %}
+                  <div class="mb-4">
+                    {% for message in messages %}
+                      <div class="p-3 rounded-md {% if message.tags %}text-sm {{ message.tags }}{% endif %}" style="background:#f8fafc;">
+                        {{ message }}
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                {% if product.comments.exists %}
+                    <div class="space-y-4">
+                        {% for c in product.comments.all %}
+                        <div class="border rounded-lg p-4 bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="text-sm text-gray-700 font-medium">
+                                        {{ c.author.username }}
+                                        {% if c.rating %}
+                                            <span class="ml-3 text-yellow-600 font-semibold">★ {{ c.rating }}/5</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">{{ c.created_at|date:"d M Y, H:i" }}</div>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {% if request.user == c.author %}
+                                        <span class="text-xs text-gray-400">Anda</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mt-3 text-gray-800 whitespace-pre-wrap">
+                                {{ c.content }}
+                            </div>
+
+                            <!-- Replies -->
+                            <div class="mt-3 space-y-2">
+                                {% for r in c.replies.all %}
+                                <div class="ml-4 p-3 bg-white rounded border">
+                                    <div class="flex justify-between items-center">
+                                        <div class="text-sm font-semibold text-indigo-700">{{ r.author.username }} (penjual)</div>
+                                        <div class="text-xs text-gray-400">{{ r.created_at|date:"d M Y, H:i" }}</div>
+                                    </div>
+                                    <div class="mt-2 text-gray-800">
+                                        {{ r.content }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Reply form: only visible to seller -->
+                            {% if request.user.is_authenticated and request.user == product.user %}
+                                <form action="{% url 'comments:reply_comment' c.id %}" method="post" class="mt-3 flex gap-3 items-start">
+                                    {% csrf_token %}
+                                    <textarea name="content" rows="2" placeholder="Balas komentar ini..." class="flex-1 border rounded px-3 py-2"></textarea>
+                                    <div>
+                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Balas</button>
+                                    </div>
+                                </form>
+                            {% endif %}
+
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-gray-600">Belum ada komentar untuk produk ini.</div>
+                {% endif %}
+            </div>
+        </section>
     </div>
 </div>
 
