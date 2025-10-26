@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'search',
     'comments',
     'chat',
+    'auction',
 ]
 
 MIDDLEWARE = [

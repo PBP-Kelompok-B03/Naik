@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Auction</title>
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+</head>
+<body>
+    {% include 'auction/navbar.html' %}
+    <div class="container">
+        <h1>Edit Auction: {{ auction.title }}</h1>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Update Auction</button>
+        </form>
+        <a href="{% url 'auction_list' %}">Back to Auctions</a>
+    </div>
+    {% include 'auction/footer.html' %}
+</body>
+</html>

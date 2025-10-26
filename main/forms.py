@@ -35,6 +35,7 @@ class ProductForm(ModelForm):
         })
     )
 
+
 class CustomUserCreationForm(UserCreationForm):
     role = forms.ChoiceField(
         choices=Profile.ROLE_CHOICES,

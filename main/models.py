@@ -20,6 +20,16 @@ class Product(models.Model):
     thumbnail = models.ImageField(upload_to='image/products/temp/', null=True, blank=True)
     count_sold = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=10)
+    is_auction = models.BooleanField(default=False)
+    auction_increment = models.DecimalField(max_digits=10, decimal_places=0, null=True, blank=True)
+    auction_end_time = models.DateTimeField(null=True, blank=True)
+    auction_winner = models.ForeignKey(User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='auction_wins'
+    )
+
 
     def __str__(self):
         return self.title

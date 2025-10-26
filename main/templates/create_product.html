@@ -63,6 +63,41 @@
         </div>
       </div>
     
+      <!-- Auction Options -->
+      <div class="border-t border-gray-200 pt-6 mt-6">
+        <div class="flex items-center mb-4">
+          <label class="inline-flex items-center">
+            {{ form.is_auction }}
+            <span class="ml-2 text-sm font-medium text-gray-700">Sell as Auction</span>
+          </label>
+        </div>
+
+        <div id="auctionFields" class="space-y-4" style="display: none;">
+          <!-- Starting Price Info -->
+          <div class="bg-blue-50 p-4 rounded-md">
+            <p class="text-sm text-blue-700">
+              The product price will be used as the starting bid price
+            </p>
+          </div>
+
+          <!-- Auction Duration -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Auction Duration (hours)
+            </label>
+            {{ form.auction_duration }}
+          </div>
+
+          <!-- Minimum Bid Increment -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Bid Increment (IDR)
+            </label>
+            {{ form.auction_increment }}
+          </div>
+        </div>
+      </div>
+    
       <!-- Buttons -->
       <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
         <a href="{% url 'main:show_main' %}" class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors text-center">
@@ -107,5 +142,17 @@ function previewImage(event) {
     previewContainer.classList.add('hidden');
   }
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isAuctionCheckbox = document.querySelector('input[name="is_auction"]');
+    const auctionFields = document.getElementById('auctionFields');
+    function toggleAuctionFields() {
+        auctionFields.style.display = isAuctionCheckbox.checked ? 'block' : 'none';
+    }
+    isAuctionCheckbox.addEventListener('change', toggleAuctionFields);
+    toggleAuctionFields(); // Initial state
+});
 </script>
 {% endblock %}
