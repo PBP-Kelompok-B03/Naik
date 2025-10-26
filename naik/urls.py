@@ -25,6 +25,7 @@ urlpatterns = [
     path('checkout/', include('checkout.urls')),
     path('search/', include('search.urls')),
     path('auction/', include('auction.urls')),
+    path('comments/', include('comments.urls', namespace='comments')),
 ]
 
 if settings.DEBUG:

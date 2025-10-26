@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
@@ -5,6 +6,7 @@ from main.models import Product
 
 
 class Order(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     PAYMENT_CHOICES = [
         ('COD', 'Cash on Delivery'),
         ('TRANSFER', 'Transfer Bank'),
@@ -41,6 +43,7 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)

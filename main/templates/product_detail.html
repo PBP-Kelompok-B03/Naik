@@ -117,6 +117,9 @@
             <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Ulasan & Komentar ({{ product.comments.count }})</h2>
 
+                {% comment %}
+                    Display messages if any (success/error after reply)
+                {% endcomment %}
                 {% if messages %}
                   <div class="mb-4">
                     {% for message in messages %}
@@ -142,6 +145,7 @@
                                     <div class="text-xs text-gray-500 mt-1">{{ c.created_at|date:"d M Y, H:i" }}</div>
                                 </div>
                                 <div class="text-sm text-gray-500">
+                                    <!-- Jika perlu tampilkan tombol edit untuk author -->
                                     {% if request.user == c.author %}
                                         <span class="text-xs text-gray-400">Anda</span>
                                     {% endif %}
@@ -168,6 +172,12 @@
                             </div>
 
                             <!-- Reply form: only visible to seller -->
+                                {% empty %}
+                                <!-- no replies -->
+                                {% endfor %}
+                            </div>
+
+                            <!-- Reply form: only visible to seller (product.user) -->
                             {% if request.user.is_authenticated and request.user == product.user %}
                                 <form action="{% url 'comments:reply_comment' c.id %}" method="post" class="mt-3 flex gap-3 items-start">
                                     {% csrf_token %}
@@ -186,6 +196,7 @@
                 {% endif %}
             </div>
         </section>
+
     </div>
 </div>
 
