@@ -3,6 +3,38 @@
 
 {% block meta %}
 <title>{{ product.title }} - Naik Product</title>
+<Style>
+    .comment-form, .reply-form {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    .comment-form textarea, .reply-form textarea {
+        flex: 1 1 auto;
+        min-height: 60px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        padding: 8px 10px;
+        font-family: inherit;
+        resize: vertical;
+    }
+    .comment-form input[type="number"] {
+        width: 72px;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+    }
+    .btn {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+</style>
 {% endblock meta %}
 
 {% block content %}
@@ -116,7 +148,7 @@
         <section class="mt-8">
             <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Ulasan & Komentar ({{ product.comments.count }})</h2>
-
+<!-- 
                 {% comment %}
                     Display messages if any (success/error after reply)
                 {% endcomment %}
@@ -128,7 +160,7 @@
                       </div>
                     {% endfor %}
                   </div>
-                {% endif %}
+                {% endif %} -->
 
                 {% if product.comments.exists %}
                     <div class="space-y-4">
@@ -160,10 +192,30 @@
                             <div class="mt-3 space-y-2">
                                 {% for r in c.replies.all %}
                                 <div class="ml-4 p-3 bg-white rounded border">
-                                    <div class="flex justify-between items-center">
-                                        <div class="text-sm font-semibold text-indigo-700">{{ r.author.username }} (penjual)</div>
-                                        <div class="text-xs text-gray-400">{{ r.created_at|date:"d M Y, H:i" }}</div>
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="text-sm font-semibold text-indigo-700">
+                                                {{ r.author.username }} ({{ r.author.profile.role }})
+                                            </div>
+                                            <div class="text-xs text-gray-400">
+                                                {{ r.created_at|date:"d M Y, H:i" }}
+                                            </div>
+                                        </div>
+
+                                        <!-- Tombol Edit & Hapus -->
+                                        <div class="flex flex-col items-end space-y-1">
+                                            <a href="{% url 'comments:edit_reply' r.id %}"
+                                            class="text-blue-600 hover:text-blue-800 text-sm font-medium transition">
+                                                Edit
+                                            </a>
+                                            <a href="{% url 'comments:delete_reply' r.id %}"
+                                            class="text-red-600 hover:text-red-800 text-sm font-medium transition"
+                                            onclick="return confirm('Apakah kamu yakin ingin menghapus balasan ini?');">
+                                            Hapus
+                                            </a>
+                                        </div>
                                     </div>
+
                                     <div class="mt-2 text-gray-800">
                                         {{ r.content }}
                                     </div>
@@ -171,15 +223,17 @@
                                 {% endfor %}
                             </div>
 
-                            <!-- Reply form: only visible to seller (product.user) -->
-                            {% if request.user.is_authenticated and request.user == product.user %}
-                                <form action="{% url 'comments:reply_comment' c.id %}" method="post" class="mt-3 flex gap-3 items-start">
-                                    {% csrf_token %}
-                                    <textarea name="content" rows="2" placeholder="Balas komentar ini..." class="flex-1 border rounded px-3 py-2"></textarea>
-                                    <div>
-                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Balas</button>
-                                    </div>
-                                </form>
+                            <!-- Reply form: only visible to seller (product.user) and comment author (c.author) -->
+                            {% if request.user.is_authenticated %}
+                                {% if request.user == product.user or request.user == c.author %}
+                                    <form action="{% url 'comments:reply_comment' c.id %}" method="post" class="ml-4 mt-5 flex gap-3 items-start">
+                                        {% csrf_token %}
+                                        <textarea name="content" rows="2" placeholder="Balas komentar ini..." class="flex-1 border rounded px-3 py-2"></textarea>
+                                        <div>
+                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Balas</button>
+                                        </div>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         </div>
                         {% endfor %}
