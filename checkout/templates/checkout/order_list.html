@@ -55,7 +55,6 @@
                   </div>
                   <p class="text-gray-200 mt-1">{{ c.content }}</p>
 
-<<<<<<< HEAD
                         <!-- FORM Tambah komentar (hanya jika user pemilik order && order.status sesuai) -->
                         {% if order.status == 'COMPLETED' or order.status == 'PAID' and request.user.is_authenticated and order.user == request.user %}
                             {% with existing_comment=item.comments.first %}
@@ -134,10 +133,9 @@
                                 {% endfor %}
                             {% endif %}
                         {% endwith %}
-=======
                   {% for r in c.replies.all %}
                   <div class="ml-4 mt-2 p-2 bg-gray-800 border border-gray-700 rounded-md text-sm">
-                    <div class="font-semibold text-green-400">{{ r.author.username }} (penjual)</div>
+                    <div class="font-semibold text-green-400">{{ r.author.username }} ({{ r.author.profile.role }})</div>
                     <div>{{ r.content }}</div>
                     <div class="text-gray-500 text-xs mt-1">{{ r.created_at|date:"d M Y, H:i" }}</div>
                   </div>
@@ -161,7 +159,6 @@
                 </div>
               </form>
               {% endif %}
->>>>>>> c3773a6bcb1c0b91f0f7be6d5facf87d3ee0a966
 
               {% with product=item.product %}
               {% if request.user == product.user %}
