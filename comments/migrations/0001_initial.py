@@ -51,15 +51,3 @@ class Migration(migrations.Migration):
             },
         ),
     ]
-
-
-from main.models import Product
-
-# lihat berapa banyak dulu
-print("Product:", Product.objects.count())
-
-# hapus Product dulu (karena ada FK ke Order)
-Product.objects.all().delete()
-
-# konfirmasi
-print("Product:", Product.objects.count())
