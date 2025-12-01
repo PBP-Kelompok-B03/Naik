@@ -27,6 +27,7 @@ urlpatterns = [
     path('comments/', include('comments.urls', namespace='comments')),
     path('chat/', include('chat.urls')),
     path('auction/', include('auction.urls')),
+    path('auth/', include('authentication.urls')),
 ]
 
 if settings.DEBUG:
