@@ -12,7 +12,7 @@
     <form method="POST" class="space-y-5">
       {% csrf_token %}
 
-      <!-- 🧠 Non-field errors (like password mismatch, duplicate username, etc.) -->
+      <!-- Non-field errors (like password mismatch, duplicate username, etc.) -->
       {% if form.non_field_errors %}
         <div class="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-md">
           {% for error in form.non_field_errors %}
