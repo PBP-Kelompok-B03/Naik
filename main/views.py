@@ -108,8 +108,30 @@ def show_xml(request):
 
 def show_json(request):
     product_list = Product.objects.all()
-    json_data = serializers.serialize("json", product_list)
-    return HttpResponse(json_data, content_type="application/json")
+    # Custom serialization to handle thumbnail properly
+    products_data = []
+    for product in product_list:
+        # Get thumbnail value - if it's an ImageField, get the name
+        thumbnail_value = product.thumbnail.name if product.thumbnail else ''
+
+        products_data.append({
+            'model': 'main.product',
+            'pk': str(product.id),
+            'fields': {
+                'title': product.title,
+                'price': int(product.price),
+                'category': product.category,
+                'thumbnail': thumbnail_value,
+                'count_sold': product.count_sold,
+                'stock': product.stock,
+                'is_auction': product.is_auction,
+                'auction_increment': int(product.auction_increment) if product.auction_increment else None,
+                'auction_end_time': product.auction_end_time.isoformat() if product.auction_end_time else None,
+                'user': product.user.id if product.user else None,
+            }
+        })
+
+    return JsonResponse(products_data, safe=False)
 
 def show_xml_by_id(request, product_id):
    try:
@@ -235,46 +257,187 @@ def load_dataset(request):
 
     return JsonResponse({'message': f'{created_count} products loaded successfully!'})
 
+@csrf_exempt
 def proxy_image(request):
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        response = HttpResponse()
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response['Access-Control-Allow-Headers'] = '*'
+        return response
+
     image_url = request.GET.get('url')
     if not image_url:
         return HttpResponse('No URL provided', status=400)
-    
+
     try:
-        # Fetch image from external source
-        response = requests.get(image_url, timeout=10)
-        response.raise_for_status()
-        
-        # Return the image with proper content type
-        return HttpResponse(
-            response.content,
-            content_type=response.headers.get('Content-Type', 'image/jpeg')
-        )
-    except requests.RequestException as e:
+        # Parse the URL to get the static file path
+        from urllib.parse import urlparse
+        parsed_url = urlparse(image_url)
+
+        # Extract the path after /static/
+        if '/static/' in parsed_url.path:
+            relative_path = parsed_url.path.split('/static/', 1)[1]
+            file_path = os.path.join(settings.BASE_DIR, 'static', relative_path)
+
+            # Check if file exists
+            if os.path.exists(file_path):
+                # Determine content type
+                content_type = 'image/jpeg'
+                if file_path.endswith('.avif'):
+                    content_type = 'image/avif'
+                elif file_path.endswith('.png'):
+                    content_type = 'image/png'
+                elif file_path.endswith('.jpg') or file_path.endswith('.jpeg'):
+                    content_type = 'image/jpeg'
+                elif file_path.endswith('.webp'):
+                    content_type = 'image/webp'
+
+                # Read and return the file
+                with open(file_path, 'rb') as f:
+                    response = HttpResponse(f.read(), content_type=content_type)
+                    response['Access-Control-Allow-Origin'] = '*'
+                    response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                    response['Access-Control-Allow-Headers'] = '*'
+                    response['Cache-Control'] = 'public, max-age=31536000'
+                    return response
+            else:
+                return HttpResponse('Image not found', status=404)
+        else:
+            # Fallback to fetching from external URL
+            response = requests.get(image_url, timeout=10)
+            response.raise_for_status()
+            http_response = HttpResponse(
+                response.content,
+                content_type=response.headers.get('Content-Type', 'image/jpeg')
+            )
+            http_response['Access-Control-Allow-Origin'] = '*'
+            http_response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+            http_response['Access-Control-Allow-Headers'] = '*'
+            return http_response
+
+    except Exception as e:
         return HttpResponse(f'Error fetching image: {str(e)}', status=500)
     
 
 @csrf_exempt
 def create_product_flutter(request):
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": "error",
+            "message": "You must be logged in to create products."
+        }, status=401)
+
+    # Only 'seller' and 'admin' can add products
+    if request.user.profile.role not in ['seller', 'admin']:
+        return JsonResponse({
+            "status": "error",
+            "message": "You don't have permission to add products. Only sellers and admins can create products."
+        }, status=403)
+
     if request.method == 'POST':
         data = json.loads(request.body)
         title = strip_tags(data.get("title", ""))  # Strip HTML tags
-        content = strip_tags(data.get("content", ""))  # Strip HTML tags
+        price = data.get("price", 0)
         category = data.get("category", "")
+        stock = data.get("stock", 1)
         thumbnail = data.get("thumbnail", "")
-        is_featured = data.get("is_featured", False)
         user = request.user
-        
+
         new_product = Product(
-            title=title, 
-            content=content,
+            title=title,
+            price=price,
             category=category,
+            stock=stock,
             thumbnail=thumbnail,
-            is_featured=is_featured,
             user=user
         )
         new_product.save()
-        
+
         return JsonResponse({"status": "success"}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def edit_product_flutter(request, id):
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": "error",
+            "message": "You must be logged in to edit products."
+        }, status=401)
+
+    try:
+        product = Product.objects.get(pk=id)
+    except Product.DoesNotExist:
+        return JsonResponse({
+            "status": "error",
+            "message": "Product not found."
+        }, status=404)
+
+    # Buyers can never edit
+    if request.user.profile.role == 'buyer':
+        return JsonResponse({
+            "status": "error",
+            "message": "Buyers cannot edit products."
+        }, status=403)
+
+    # Sellers can only edit their own products
+    if request.user.profile.role == 'seller' and product.user != request.user:
+        return JsonResponse({
+            "status": "error",
+            "message": "You can only edit your own products."
+        }, status=403)
+
+    # Admins can edit anything
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        product.title = strip_tags(data.get("title", product.title))
+        product.price = data.get("price", product.price)
+        product.category = data.get("category", product.category)
+        product.stock = data.get("stock", product.stock)
+        thumbnail = data.get("thumbnail", "")
+        if thumbnail:
+            product.thumbnail = thumbnail
+        product.save()
+
+        return JsonResponse({"status": "success"}, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def delete_product_flutter(request, id):
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": "error",
+            "message": "You must be logged in to delete products."
+        }, status=401)
+
+    try:
+        product = Product.objects.get(pk=id)
+    except Product.DoesNotExist:
+        return JsonResponse({
+            "status": "error",
+            "message": "Product not found."
+        }, status=404)
+
+    # Buyers can never delete
+    if request.user.profile.role == 'buyer':
+        return JsonResponse({
+            "status": "error",
+            "message": "Buyers cannot delete products."
+        }, status=403)
+
+    # Sellers can only delete their own products
+    if request.user.profile.role == 'seller' and product.user != request.user:
+        return JsonResponse({
+            "status": "error",
+            "message": "You can only delete your own products."
+        }, status=403)
+
+    # Admins can delete anything
+    product.delete()
+    return JsonResponse({"status": "success"}, status=200)
