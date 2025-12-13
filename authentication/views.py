@@ -20,7 +20,9 @@ def login(request):
             return JsonResponse({
                 "username": user.username,
                 "status": True,
-                "message": "Login successful!"
+                "message": "Login successful!",
+                "role": user.profile.role,
+                "user_id": user.id
                 # Add other data if you want to send data to Flutter.
             }, status=200)
         else:
@@ -58,6 +60,7 @@ def register(request):
         username = data['username']
         password1 = data['password1']
         password2 = data['password2']
+        role = data.get('role', 'buyer')  # Default to buyer if not specified
 
         # Check if the passwords match
         if password1 != password2:
@@ -65,18 +68,22 @@ def register(request):
                 "status": False,
                 "message": "Passwords do not match."
             }, status=400)
-        
+
         # Check if the username is already taken
         if User.objects.filter(username=username).exists():
             return JsonResponse({
                 "status": False,
                 "message": "Username already exists."
             }, status=400)
-        
+
         # Create the new user
         user = User.objects.create_user(username=username, password=password1)
         user.save()
-        
+
+        # Update the user's profile with the selected role
+        user.profile.role = role
+        user.profile.save()
+
         return JsonResponse({
             "username": user.username,
             "status": 'success',

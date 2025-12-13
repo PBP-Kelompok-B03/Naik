@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \\.d:AAAZKAPBPNaiknul)",
+      "Bash(rm:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
