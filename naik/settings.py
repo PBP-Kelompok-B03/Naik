@@ -209,3 +209,11 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# ==============================
+# AUTH FOR FLUTTER API
+# ==============================
+
+LOGIN_URL = None
+LOGIN_REDIRECT_URL = None
+LOGOUT_REDIRECT_URL = None

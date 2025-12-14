@@ -1,10 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
+import json
+
 from main.models import Product
 from .models import Order, OrderItem
 
+
+# ======================================================
+# WEB VIEWS (PAKAI login_required)
+# ======================================================
 
 @login_required
 def checkout_view(request):
@@ -19,24 +26,22 @@ def checkout_view(request):
 
         product = get_object_or_404(Product, id=product_id)
 
-        # === Cek stok ===
         if product.stock < quantity:
-            return JsonResponse({"status": "error", "message": "Stok tidak mencukupi."}, status=400)
+            return JsonResponse(
+                {"status": "error", "message": "Stok tidak mencukupi."},
+                status=400
+            )
 
-        # === Hitung total dasar ===
         total_price = Decimal(product.price) * quantity
 
-        # === Tambah biaya pengiriman ===
         if shipping_type == "CEPAT":
-            total_price += Decimal("10000.00")
+            total_price += Decimal("10000")
         elif shipping_type in ["SAMEDAY", "SAME_DAY"]:
-            total_price += Decimal("20000.00")
+            total_price += Decimal("20000")
 
-        # === Tambah biaya asuransi ===
         if insurance:
-            total_price += Decimal("5000.00")
+            total_price += Decimal("5000")
 
-        # === Buat order dengan semua data lengkap ===
         order = Order.objects.create(
             user=request.user,
             total_price=total_price,
@@ -48,7 +53,6 @@ def checkout_view(request):
             status="PAID",
         )
 
-        # === Simpan item ===
         OrderItem.objects.create(
             order=order,
             product=product,
@@ -56,30 +60,26 @@ def checkout_view(request):
             price=product.price,
         )
 
-        # Kurangi stok
         product.stock -= quantity
         product.count_sold += quantity
         product.save()
 
         return JsonResponse({
             "status": "success",
-            "message": f"Order #{order.id} berhasil dibuat! Total: Rp{total_price:,.0f}",
-            "order_id": order.id,
+            "order_id": str(order.id),
             "total": str(order.total_price),
-            "product_name": product.title,
         })
 
-    # === Handle GET ===
     product_id = request.GET.get("product_id")
     quantity = int(request.GET.get("quantity", 1))
     product = get_object_or_404(Product, id=product_id)
-    total_price = Decimal(product.price) * quantity
 
     return render(request, "checkout/checkout.html", {
         "product": product,
         "quantity": quantity,
-        "total_price": total_price,
+        "total_price": Decimal(product.price) * quantity,
     })
+
 
 @login_required
 def checkout_success(request):
@@ -89,12 +89,119 @@ def checkout_success(request):
 
     item = order.items.first()
     return render(request, "checkout/success.html", {
-        "name": request.user.username,
         "order": order,
         "product_name": item.product.title if item else "-",
     })
 
+
 @login_required
 def order_list(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    orders = Order.objects.filter(user=request.user).order_by("-created_at")
     return render(request, "checkout/order_list.html", {"orders": orders})
+
+
+# ===========================
+# PLACE ORDER (FLUTTER API)
+# ===========================
+@csrf_exempt
+def place_order(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Unauthorized"},
+            status=401
+        )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "POST only"},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse(
+            {"status": "error", "message": "Invalid JSON"},
+            status=400
+        )
+
+    product_id = data.get("product_id")
+    quantity = int(data.get("quantity", 1))
+    address = data.get("address", "")
+    payment_method = data.get("payment_method", "EWALLET")
+    shipping_type = data.get("shipping_type", "REGULER")
+    insurance = data.get("insurance", False)
+    note = data.get("note", "")
+
+    if isinstance(insurance, str):
+        insurance = insurance.lower() == "true"
+
+    product = Product.objects.get(id=product_id)
+
+    if product.stock < quantity:
+        return JsonResponse(
+            {"status": "error", "message": "Stok tidak cukup"},
+            status=400
+        )
+
+    total_price = Decimal(product.price) * quantity
+
+    if shipping_type == "NEXTDAY":
+        total_price += Decimal("10000")
+    elif shipping_type == "SAMEDAY":
+        total_price += Decimal("15000")
+
+    if insurance:
+        total_price += Decimal("5000")
+
+    order = Order.objects.create(
+        user=request.user,
+        total_price=total_price,
+        address=address,
+        payment_method=payment_method,
+        shipping_type=shipping_type,
+        insurance=insurance,
+        note=note,
+        status="PAID",
+    )
+
+    OrderItem.objects.create(
+        order=order,
+        product=product,
+        quantity=quantity,
+        price=product.price,
+    )
+
+    product.stock -= quantity
+    product.count_sold += quantity
+    product.save()
+
+    return JsonResponse({
+        "status": "success",
+        "order_id": str(order.id),
+        "total_price": str(order.total_price),
+    })
+
+
+# ===========================
+# ORDER LIST (FLUTTER API)
+# ===========================
+def order_list_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"},
+            status=401
+        )
+
+    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+
+    data = []
+    for order in orders:
+        data.append({
+            "id": str(order.id),
+            "total_price": str(order.total_price),
+            "status": order.status,
+            "created_at": order.created_at.strftime("%d %b %Y %H:%M"),
+        })
+
+    return JsonResponse(data, safe=False)
