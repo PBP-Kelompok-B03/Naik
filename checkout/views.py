@@ -117,14 +117,13 @@ def place_order(request):
             status=405
         )
 
-    try:
-        data = json.loads(request.body)
-    except Exception:
+    data = request.POST if request.POST else {}
+
+    if not data:
         return JsonResponse(
-            {"status": "error", "message": "Invalid JSON"},
+            {"status": "error", "message": "No data received"},
             status=400
         )
-
     product_id = data.get("product_id")
     quantity = int(data.get("quantity", 1))
     address = data.get("address", "")
@@ -187,18 +186,29 @@ def place_order(request):
 # ORDER LIST (FLUTTER API)
 # ===========================
 def order_list_api(request):
-    # if not request.user.is_authenticated:
-    #     return JsonResponse(
-    #         {"error": "Unauthorized"},
-    #         status=401
-    #     )
-
-    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .prefetch_related("items__product")
+        .order_by("-created_at")
+    )
 
     data = []
     for order in orders:
+        items = []
+
+        for item in order.items.all():
+            items.append({
+                "product_name": item.product.title,
+                "quantity": item.quantity,
+            })
+
         data.append({
             "id": str(order.id),
+            "items": items,  # 🔥 BUKAN product_name tunggal
+            "payment_method": order.get_payment_method_display(),
+            "shipping_type": order.get_shipping_type_display(),
+            "insurance": order.insurance,
             "total_price": str(order.total_price),
             "status": order.status,
             "created_at": order.created_at.strftime("%d %b %Y %H:%M"),
