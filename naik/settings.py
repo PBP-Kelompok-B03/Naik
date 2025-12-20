@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'auction',
     'comments',
     'chat',
-    'auction',
     'authentication',
 ]
 
