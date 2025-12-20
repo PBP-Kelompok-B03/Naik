@@ -11,6 +11,7 @@ from .forms import CommentForm
 from .models import Comment, Reply
 from checkout.models import OrderItem
 
+# Django views untuk komentar dan balasan komentar
 @login_required(login_url='/login')
 def create_comment(request):
     """
@@ -230,3 +231,195 @@ def delete_reply(request, reply_id):
         messages.error(request, f"Gagal menghapus balasan: {e}")
 
     return redirect(request.META.get('HTTP_REFERER', reverse('main:show_product', args=[reply.comment.product.id])))
+
+# Flutter API views 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
+@csrf_exempt
+def flutter_create_comment(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        order_item_id = data.get('order_item_id')
+        content = data.get('content', '').strip()
+        rating = data.get('rating', None)
+        user = request.user if request.user.is_authenticated else None
+
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+        if not order_item_id:
+            return JsonResponse({'status': False, 'message': 'Missing order_item_id'}, status=400)
+        if not content:
+            return JsonResponse({'status': False, 'message': 'Isi komentar tidak boleh kosong.'}, status=400)
+
+        order_item = get_object_or_404(OrderItem, pk=order_item_id)
+        if getattr(order_item.order, 'user', None) != user:
+            return JsonResponse({'status': False, 'message': 'You cannot comment on items that are not yours.'}, status=403)
+
+        allowed_statuses = ['DELIVERED', 'COMPLETED', 'PAID']
+        order_status = getattr(order_item.order, 'status', '').upper()
+        if order_status not in allowed_statuses:
+            return JsonResponse({'status': False, 'message': 'You can add reviews only for completed/delivered orders.'}, status=403)
+
+        existing = Comment.objects.filter(order_item=order_item, author=user).first()
+        if rating is not None:
+            try:
+                rating = int(rating)
+                if rating < 1 or rating > 5:
+                    raise ValueError
+            except ValueError:
+                return JsonResponse({'status': False, 'message': 'Rating harus berupa angka antara 1 dan 5.'}, status=400)
+
+        if existing:
+            existing.content = content
+            existing.rating = rating
+            existing.save()
+            return JsonResponse({'status': True, 'message': 'Komentar berhasil diperbarui.'})
+        else:
+            product = order_item.product
+            comment = Comment(
+                order_item=order_item,
+                product=product,
+                author=user,
+                content=content,
+                rating=rating
+            )
+            comment.save()
+            return JsonResponse({'status': True, 'message': 'Komentar/ulasan berhasil ditambahkan.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal menyimpan komentar: {e}'}, status=500)
+
+@csrf_exempt
+def flutter_edit_comment(request, comment_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        content = data.get('content', '').strip()
+        rating = data.get('rating', None)
+        user = request.user if request.user.is_authenticated else None
+
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+
+        comment = get_object_or_404(Comment, pk=comment_id)
+        if comment.author != user:
+            return JsonResponse({'status': False, 'message': 'Hanya penulis komentar yang dapat mengedit komentar ini.'}, status=403)
+        if not content:
+            return JsonResponse({'status': False, 'message': 'Isi komentar tidak boleh kosong.'}, status=400)
+        if rating is not None:
+            try:
+                rating = int(rating)
+                if rating < 1 or rating > 5:
+                    raise ValueError
+            except ValueError:
+                return JsonResponse({'status': False, 'message': 'Rating harus berupa angka antara 1 dan 5.'}, status=400)
+
+        comment.content = content
+        comment.rating = rating
+        comment.save()
+        return JsonResponse({'status': True, 'message': 'Komentar berhasil diperbarui.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal memperbarui komentar: {e}'}, status=500)
+
+@csrf_exempt
+def flutter_delete_comment(request, comment_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        user = request.user if request.user.is_authenticated else None
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+
+        comment = get_object_or_404(Comment, pk=comment_id)
+        if comment.author != user:
+            return JsonResponse({'status': False, 'message': 'Hanya penulis komentar yang dapat menghapus komentar ini.'}, status=403)
+        comment.delete()
+        return JsonResponse({'status': True, 'message': 'Komentar berhasil dihapus.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal menghapus komentar: {e}'}, status=500)
+
+@csrf_exempt
+def flutter_reply_to_comment(request, comment_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        content = data.get('content', '').strip()
+        user = request.user if request.user.is_authenticated else None
+
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+        if not content:
+            return JsonResponse({'status': False, 'message': 'Isi balasan tidak boleh kosong.'}, status=400)
+
+        comment = get_object_or_404(Comment, pk=comment_id)
+        product = comment.product
+        seller = getattr(product, 'user', None)
+        buyer = getattr(comment, 'author', None)
+        if seller is None:
+            return JsonResponse({'status': False, 'message': 'Product seller is not defined; cannot verify permission.'}, status=400)
+        if getattr(seller, 'pk') != user.pk and getattr(buyer, 'pk') != user.pk:
+            return JsonResponse({'status': False, 'message': 'Hanya penjual atau pembeli produk ini yang dapat membalas komentar.'}, status=403)
+
+        reply = Reply(comment=comment, author=user, content=content)
+        reply.save()
+        return JsonResponse({'status': True, 'message': 'Balasan berhasil disimpan.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal menyimpan balasan: {e}'}, status=500)
+
+@csrf_exempt
+def flutter_edit_reply(request, reply_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        content = data.get('content', '').strip()
+        user = request.user if request.user.is_authenticated else None
+
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+
+        reply = get_object_or_404(Reply, pk=reply_id)
+        if reply.author != user:
+            return JsonResponse({'status': False, 'message': 'Hanya penulis balasan yang dapat mengedit balasan ini.'}, status=403)
+        if not content:
+            return JsonResponse({'status': False, 'message': 'Isi balasan tidak boleh kosong.'}, status=400)
+
+        reply.content = content
+        reply.save()
+        return JsonResponse({'status': True, 'message': 'Balasan berhasil diperbarui.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal memperbarui balasan: {e}'}, status=500)
+
+@csrf_exempt
+def flutter_delete_reply(request, reply_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'message': 'Only POST allowed'}, status=400)
+
+    try:
+        user = request.user if request.user.is_authenticated else None
+        if not user:
+            return JsonResponse({'status': False, 'message': 'Authentication required'}, status=401)
+
+        reply = get_object_or_404(Reply, pk=reply_id)
+        if reply.author != user:
+            return JsonResponse({'status': False, 'message': 'Hanya penulis balasan yang dapat menghapus balasan ini.'}, status=403)
+        reply.delete()
+        return JsonResponse({'status': True, 'message': 'Balasan berhasil dihapus.'})
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': False, 'message': f'Gagal menghapus balasan: {e}'}, status=500)
