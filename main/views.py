@@ -125,6 +125,43 @@ def show_json(request):
                 'auction_increment': int(product.auction_increment) if product.auction_increment else None,
                 'auction_end_time': product.auction_end_time.isoformat() if product.auction_end_time else None,
                 'user': product.user.id if product.user else None,
+                # 1. orderitem_set adalah nama default relasi reverse ForeignKey di Django.
+                #    Jika di OrderItem: product = models.ForeignKey(Product, ...), maka Product otomatis punya .orderitem_set.
+                #    Bisa diganti dengan related_name di model, misal related_name='order_items', maka jadi product.order_items.all().
+                # 2. Bisa! Contoh di bawah: kirim dict lengkap untuk setiap OrderItem.
+                # 'order_items': [
+                #     {
+                #     'id': str(item.id),
+                #     'order': str(item.order.id),
+                #     'quantity': item.quantity,
+                #     'price': float(item.price),
+                #     }
+                #     for item in product.orderitem_set.all()
+                # ],
+                # 'comments': [str(comment.id) for comment in product.comments.all()],
+                # 'replies': [str(reply.id) for comment in product.comments.all() for reply in comment.replies.all()],
+                'comments': [
+                    {
+                        'comment_id': str(comment.id),
+                        'comment_rating': comment.rating,
+                        'comment_content': comment.content,
+                        'comment_author_id': str(comment.author.id) if comment.author else None,
+                        'comment_author_username': comment.author.username if comment.author else None,
+                        'comment_created_at': comment.created_at.isoformat(),
+                        'comment_order_item_id': str(comment.order_item.id) if comment.order_item else None,
+                        'replies': [
+                            {
+                                'reply_id': str(reply.id),
+                                'reply_content': reply.content,
+                                'reply_author_id': str(reply.author.id) if reply.author else None,
+                                'reply_author_username': reply.author.username if reply.author else None,
+                                'reply_created_at': reply.created_at.isoformat(),
+                            }
+                            for reply in comment.replies.all()
+                        ]
+                    }
+                    for comment in product.comments.all()
+                ]
             }
         })
 
