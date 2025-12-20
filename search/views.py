@@ -8,7 +8,7 @@ def search_products(request):
     min_price = request.GET.get('min_price', '')
     max_price = request.GET.get('max_price', '')
 
-    products = Product.objects.all()
+    products = Product.objects.filter(is_auction=False)
 
     if query:
         products = products.filter(title__icontains=query)
