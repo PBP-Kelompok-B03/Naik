@@ -41,9 +41,9 @@ def show_main(request):
     filter_type = request.GET.get("filter", "all")  # default 'all'
 
     if filter_type == "all":
-        product_list = Product.objects.all()
+        product_list = Product.objects.filter(is_auction=False)
     else:
-        product_list = Product.objects.filter(user=request.user)
+        product_list = Product.objects.filter(user=request.user, is_auction=False)
 
     context = {
         'name': request.user.username,
@@ -63,14 +63,12 @@ def create_product(request):
         if form.is_valid():
             product = form.save(commit=False)
             product.user = request.user
-
-            # Handle auction settings
-            if form.cleaned_data.get('is_auction'):
-                product.is_auction = True
-                product.auction_increment = form.cleaned_data.get('auction_increment')
-                duration_hours = form.cleaned_data.get('auction_duration', 24)
-                product.auction_end_time = timezone.now() + timedelta(hours=duration_hours)
-
+            
+            # Handle auction logic
+            if product.is_auction and form.cleaned_data.get('auction_duration'):
+                from django.utils import timezone
+                product.auction_end_time = timezone.now() + timezone.timedelta(hours=form.cleaned_data['auction_duration'])
+            
             product.save()
             return redirect('main:show_main')
     else:
