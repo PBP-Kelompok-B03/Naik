@@ -321,18 +321,18 @@ def proxy_image(request):
 @csrf_exempt
 def create_product_flutter(request):
     # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            "status": "error",
-            "message": "You must be logged in to create products."
-        }, status=401)
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You must be logged in to create products."
+    #     }, status=401)
 
     # Only 'seller' and 'admin' can add products
-    if request.user.profile.role not in ['seller', 'admin']:
-        return JsonResponse({
-            "status": "error",
-            "message": "You don't have permission to add products. Only sellers and admins can create products."
-        }, status=403)
+    # if request.user.profile.role not in ['seller', 'admin']:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You don't have permission to add products. Only sellers and admins can create products."
+    #     }, status=403)
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -360,11 +360,11 @@ def create_product_flutter(request):
 @csrf_exempt
 def edit_product_flutter(request, id):
     # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            "status": "error",
-            "message": "You must be logged in to edit products."
-        }, status=401)
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You must be logged in to edit products."
+    #     }, status=401)
 
     try:
         product = Product.objects.get(pk=id)
@@ -375,18 +375,18 @@ def edit_product_flutter(request, id):
         }, status=404)
 
     # Buyers can never edit
-    if request.user.profile.role == 'buyer':
-        return JsonResponse({
-            "status": "error",
-            "message": "Buyers cannot edit products."
-        }, status=403)
+    # if request.user.profile.role == 'buyer':
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "Buyers cannot edit products."
+    #     }, status=403)
 
     # Sellers can only edit their own products
-    if request.user.profile.role == 'seller' and product.user != request.user:
-        return JsonResponse({
-            "status": "error",
-            "message": "You can only edit your own products."
-        }, status=403)
+    # if request.user.profile.role == 'seller' and product.user != request.user:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You can only edit your own products."
+    #     }, status=403)
 
     # Admins can edit anything
     if request.method == 'POST':
@@ -407,11 +407,11 @@ def edit_product_flutter(request, id):
 @csrf_exempt
 def delete_product_flutter(request, id):
     # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            "status": "error",
-            "message": "You must be logged in to delete products."
-        }, status=401)
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You must be logged in to delete products."
+    #     }, status=401)
 
     try:
         product = Product.objects.get(pk=id)
@@ -422,18 +422,18 @@ def delete_product_flutter(request, id):
         }, status=404)
 
     # Buyers can never delete
-    if request.user.profile.role == 'buyer':
-        return JsonResponse({
-            "status": "error",
-            "message": "Buyers cannot delete products."
-        }, status=403)
+    # if request.user.profile.role == 'buyer':
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "Buyers cannot delete products."
+    #     }, status=403)
 
     # Sellers can only delete their own products
-    if request.user.profile.role == 'seller' and product.user != request.user:
-        return JsonResponse({
-            "status": "error",
-            "message": "You can only delete your own products."
-        }, status=403)
+    # if request.user.profile.role == 'seller' and product.user != request.user:
+    #     return JsonResponse({
+    #         "status": "error",
+    #         "message": "You can only delete your own products."
+    #     }, status=403)
 
     # Admins can delete anything
     product.delete()

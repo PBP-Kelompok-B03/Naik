@@ -105,11 +105,11 @@ def order_list(request):
 # ===========================
 @csrf_exempt
 def place_order(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"status": "error", "message": "Unauthorized"},
-            status=401
-        )
+    # if not request.user.is_authenticated:
+    #     return JsonResponse(
+    #         {"status": "error", "message": "Unauthorized"},
+    #         status=401
+    #     )
 
     if request.method != "POST":
         return JsonResponse(
@@ -187,11 +187,11 @@ def place_order(request):
 # ORDER LIST (FLUTTER API)
 # ===========================
 def order_list_api(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Unauthorized"},
-            status=401
-        )
+    # if not request.user.is_authenticated:
+    #     return JsonResponse(
+    #         {"error": "Unauthorized"},
+    #         status=401
+    #     )
 
     orders = Order.objects.filter(user=request.user).order_by("-created_at")
 
