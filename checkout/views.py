@@ -185,11 +185,18 @@ def place_order(request):
 # ===========================
 # ORDER LIST (FLUTTER API)
 # ===========================
+@csrf_exempt
 def order_list_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Unauthorized"},
+            status=401
+        )
+    
     orders = (
         Order.objects
         .filter(user=request.user)
-        .prefetch_related("items__product")
+        .prefetch_related("items__product", "items__comments__author", "items__comments__replies__author")
         .order_by("-created_at")
     )
 
@@ -198,14 +205,40 @@ def order_list_api(request):
         items = []
 
         for item in order.items.all():
+            comments = [
+                {
+                    'comment_id': str(comment.id),
+                    'comment_rating': comment.rating,
+                    'comment_content': comment.content,
+                    'comment_author_id': str(comment.author.id) if comment.author else None,
+                    'comment_author_username': comment.author.username if comment.author else None,
+                    'comment_author_role': comment.author.profile.role if comment.author and hasattr(comment.author, 'profile') else 'user',
+                    'comment_created_at': comment.created_at.isoformat(),
+                    'replies': [
+                        {
+                            'reply_id': str(reply.id),
+                            'reply_content': reply.content,
+                            'reply_author_id': str(reply.author.id) if reply.author else None,
+                            'reply_author_username': reply.author.username if reply.author else None,
+                            'reply_author_role': reply.author.profile.role if reply.author and hasattr(reply.author, 'profile') else 'user',
+                            'reply_created_at': reply.created_at.isoformat(),
+                        }
+                        for reply in comment.replies.all()
+                    ]
+                }
+                for comment in item.comments.all()
+            ]
             items.append({
+                "order_item_id": str(item.id),
                 "product_name": item.product.title,
+                "product_id": str(item.product.id),
                 "quantity": item.quantity,
+                "comments": comments,
             })
 
         data.append({
             "id": str(order.id),
-            "items": items,  # 🔥 BUKAN product_name tunggal
+            "items": items,
             "payment_method": order.get_payment_method_display(),
             "shipping_type": order.get_shipping_type_display(),
             "insurance": order.insurance,
