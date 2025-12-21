@@ -1,3 +1,4 @@
+from time import timezone
 import traceback
 from django.shortcuts import render
 from django.forms import ValidationError
@@ -54,6 +55,7 @@ def create_comment(request):
         # update existing comment
         existing.content = content
         existing.rating = rating
+        # existing.updated_at = timezone.now()
         try:
             existing.save()
             messages.success(request, "Komentar berhasil diperbarui.")
@@ -113,6 +115,7 @@ def edit_comment(request, comment_id):
         # Terapkan perubahan
         comment.content = content
         comment.rating = rating
+        # comment.updated_at = timezone.now()
 
         try:
             comment.save()  # akan memanggil full_clean jika model mengimplementasikannya
@@ -201,6 +204,7 @@ def edit_reply(request, reply_id):
             return redirect(request.META.get('HTTP_REFERER', reverse('main:show_product', args=[reply.comment.product.id])))
 
         reply.content = content
+        # reply.updated_at = timezone.now()
         try:
             reply.save()
             messages.success(request, "Balasan berhasil diperbarui.")
@@ -277,6 +281,7 @@ def flutter_create_comment(request):
         if existing:
             existing.content = content
             existing.rating = rating
+            # existing.updated_at = timezone.now()
             existing.save()
             return JsonResponse({'status': True, 'message': 'Komentar berhasil diperbarui.'})
         else:
@@ -323,6 +328,7 @@ def flutter_edit_comment(request, comment_id):
 
         comment.content = content
         comment.rating = rating
+        # comment.updated_at = timezone.now()
         comment.save()
         return JsonResponse({'status': True, 'message': 'Komentar berhasil diperbarui.'})
     except Exception as e:
@@ -399,6 +405,7 @@ def flutter_edit_reply(request, reply_id):
             return JsonResponse({'status': False, 'message': 'Isi balasan tidak boleh kosong.'}, status=400)
 
         reply.content = content
+        # reply.updated_at = timezone.now()
         reply.save()
         return JsonResponse({'status': True, 'message': 'Balasan berhasil diperbarui.'})
     except Exception as e:
