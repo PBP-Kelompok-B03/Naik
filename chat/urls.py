@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/create/', views.api_create_conversation, name='api_create_conversation'),
     path('api/<uuid:convo_id>/messages/', views.api_fetch_messages, name='api_fetch_messages'),
     path('api/<uuid:convo_id>/send/', views.api_send_message, name='api_send_message'),
+    path('api/list/', views.api_conversation_list, name='api_conversation_list'),
 ]

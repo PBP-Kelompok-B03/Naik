@@ -34,7 +34,11 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "harish-azka-naik.pbp.cs.ui.ac.id", "raymundo-rafaelito-naik.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://raymundo-rafaelito-naik.pbp.cs.ui.ac.id"
+    "https://raymundo-rafaelito-naik.pbp.cs.ui.ac.id",
+    "http://localhost:57480",
+    "http://127.0.0.1:57480",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
 # Application definition
@@ -214,6 +218,6 @@ CORS_ALLOW_HEADERS = [
 # AUTH FOR FLUTTER API
 # ==============================
 
-LOGIN_URL = None
-LOGIN_REDIRECT_URL = None
-LOGOUT_REDIRECT_URL = None
+LOGIN_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

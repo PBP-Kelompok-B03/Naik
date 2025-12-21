@@ -8,7 +8,9 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
 from django.core.exceptions import MultipleObjectsReturned
-
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt 
 from .models import Conversation, ConversationMessage
 
 @login_required
@@ -162,53 +164,78 @@ def api_send_message(request, convo_id):
 
     return JsonResponse({"ok": True, "id": str(msg.id)})
 
-@login_required
 @require_POST
 def api_create_conversation(request):
-    """
-    Create or return existing conversation between request.user and another user.
-    Accepts form-POST with 'username' or 'user_id', or JSON body with same keys.
-    Returns JSON: {"ok": True, "id": "<conversation_uuid>"} or {"error": "..."}.
-    """
-    # Try form POST first
-    username = request.POST.get('username')
-    other_id = request.POST.get('user_id')
+    # API TIDAK BOLEH REDIRECT
+    if not request.user.is_authenticated:
+        return JsonResponse({"message": "Unauthorized"}, status=401)
 
-    # If JSON, try parse JSON body as fallback
-    if not username and not other_id:
-        try:
-            body = json.loads(request.body.decode() or "{}")
-            username = body.get('username') or username
-            other_id = body.get('user_id') or other_id
-        except Exception:
-            # ignore parse errors; we'll validate below
-            pass
-
-    if not username and not other_id:
-        return JsonResponse({"error": "missing 'username' or 'user_id' in request"}, status=400)
-
-    # Resolve the other user
+    # Ambil data dari JSON atau form
     try:
-        if other_id:
-            other = User.objects.get(pk=other_id)
-        else:
-            other = User.objects.get(username=username)
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except json.JSONDecodeError:
+        data = {}
+
+    other_username = data.get("other_username") or request.POST.get("other_username")
+    if not other_username:
+        return JsonResponse({"message": "other_username wajib diisi"}, status=400)
+
+    if other_username == request.user.username:
+        return JsonResponse({"message": "Tidak bisa chat dengan diri sendiri"}, status=400)
+
+    try:
+        other = User.objects.get(username=other_username)
     except User.DoesNotExist:
-        return JsonResponse({"error": "user not found"}, status=404)
+        return JsonResponse({"message": "User tidak ditemukan"}, status=404)
 
-    if other == request.user:
-        return JsonResponse({"error": "cannot create conversation with yourself"}, status=400)
+    # Cari conversation yang sudah ada
+    convo = Conversation.objects.filter(
+        Q(user_a=request.user, user_b=other) |
+        Q(user_a=other, user_b=request.user)
+    ).first()
 
-    # Try to use model helper if available; otherwise, fallback to simple lookup/create
-    try:
-        # If your Conversation model defines get_or_create_for(user_a, user_b) this will use it.
-        convo = Conversation.get_or_create_for(request.user, other)
-    except Exception:
-        # Fallback: find existing conversation between the two users, ignoring order
-        convo = Conversation.objects.filter(
-            (Q(user_a=request.user) & Q(user_b=other)) | (Q(user_a=other) & Q(user_b=request.user))
-        ).first()
-        if not convo:
-            convo = Conversation.objects.create(user_a=request.user, user_b=other)
+    if convo is None:
+        convo = Conversation.objects.create(
+            user_a=request.user,
+            user_b=other
+        )
 
-    return JsonResponse({"ok": True, "id": str(convo.pk)})
+    return JsonResponse({
+        "conversation": {
+            "id": str(convo.pk),
+            "other_username": other.username,
+            "last_message": "",
+            "unread_count": 0,
+        }
+    })
+
+@login_required
+def api_conversation_list(request):
+    """
+    API untuk mengambil daftar percakapan user dalam format JSON.
+    """
+    raw_convos = Conversation.objects.filter(Q(user_a=request.user) | Q(user_b=request.user)).order_by('-updated_at')
+    
+    data = []
+    for convo in raw_convos:
+        other = convo.user_a if convo.user_b == request.user else convo.user_b
+        
+        last_obj = convo.messages.order_by('-created_at').first()
+        last_message_text = ""
+        last_message_time = None
+        
+        if last_obj:
+            last_message_text = last_obj.content.strip() if (last_obj.content and last_obj.content.strip()) else "[gambar]"
+            last_message_time = last_obj.created_at.isoformat()
+        
+        unread_count = convo.messages.exclude(sender=request.user).filter(is_read=False).count()
+        
+        data.append({
+            "id": str(convo.pk),
+            "other_username": other.username,
+            "last_message": last_message_text,
+            "last_message_time": last_message_time,
+            "unread_count": unread_count,
+        })
+        
+    return JsonResponse({"conversations": data})
