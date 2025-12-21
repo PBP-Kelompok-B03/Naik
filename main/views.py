@@ -28,6 +28,7 @@ import requests
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.html import strip_tags
+from django.utils import timezone
 import json
 from django.http import JsonResponse
 
@@ -36,10 +37,11 @@ from django.http import JsonResponse
 def show_main(request):
     filter_type = request.GET.get("filter", "all")  # default 'all'
 
+    # Exclude auction products - they should only appear in auction list
     if filter_type == "all":
-        product_list = Product.objects.all()
+        product_list = Product.objects.filter(is_auction=False)
     else:
-        product_list = Product.objects.filter(user=request.user)
+        product_list = Product.objects.filter(user=request.user, is_auction=False)
 
     context = {
         'name': request.user.username,
@@ -99,12 +101,14 @@ def show_product(request, id):
     return render(request, "product_detail.html", context)
 
 def show_xml(request):
-     product_list = Product.objects.all()
+     # Exclude auction products - they should only appear in auction list
+     product_list = Product.objects.filter(is_auction=False)
      xml_data = serializers.serialize("xml", product_list)
      return HttpResponse(xml_data, content_type="application/xml")
 
 def show_json(request):
-    product_list = Product.objects.all()
+    # Exclude auction products - they should only appear in auction list
+    product_list = Product.objects.filter(is_auction=False)
     # Custom serialization to handle thumbnail properly
     products_data = []
     for product in product_list:
@@ -382,14 +386,29 @@ def create_product_flutter(request):
         thumbnail = data.get("thumbnail", "")
         user = request.user
 
+        # Handle auction fields
+        is_auction = data.get("is_auction", False)
+        auction_increment = data.get("auction_increment", None)
+        auction_duration = data.get("auction_duration", None)
+
         new_product = Product(
             title=title,
             price=price,
             category=category,
             stock=stock,
             thumbnail=thumbnail,
-            user=user
+            user=user,
+            is_auction=is_auction,
         )
+
+        # If it's an auction, set the auction fields
+        if is_auction:
+            new_product.auction_increment = auction_increment
+            # Calculate auction end time from duration (in hours)
+            if auction_duration:
+                from datetime import timedelta
+                new_product.auction_end_time = timezone.now() + timedelta(hours=auction_duration)
+
         new_product.save()
 
         return JsonResponse({"status": "success"}, status=200)

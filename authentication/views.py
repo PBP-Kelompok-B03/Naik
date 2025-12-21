@@ -62,6 +62,17 @@ def register(request):
         password2 = data['password2']
         role = data.get('role', 'buyer')  # Default to buyer if not specified
 
+        # Prevent users from registering as admin
+        if role == 'admin':
+            return JsonResponse({
+                "status": False,
+                "message": "Cannot register as admin. Admin role is restricted."
+            }, status=400)
+
+        # Validate role is either buyer or seller
+        if role not in ['buyer', 'seller']:
+            role = 'buyer'  # Default to buyer for invalid roles
+
         # Check if the passwords match
         if password1 != password2:
             return JsonResponse({

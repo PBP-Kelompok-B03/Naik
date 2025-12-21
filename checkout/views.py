@@ -26,6 +26,13 @@ def checkout_view(request):
 
         product = get_object_or_404(Product, id=product_id)
 
+        # Prevent direct purchase of auction products
+        if product.is_auction:
+            return JsonResponse(
+                {"status": "error", "message": "Produk auction tidak dapat dibeli langsung. Silakan ikuti proses lelang."},
+                status=400
+            )
+
         if product.stock < quantity:
             return JsonResponse(
                 {"status": "error", "message": "Stok tidak mencukupi."},
@@ -73,6 +80,12 @@ def checkout_view(request):
     product_id = request.GET.get("product_id")
     quantity = int(request.GET.get("quantity", 1))
     product = get_object_or_404(Product, id=product_id)
+
+    # Prevent accessing checkout page for auction products
+    if product.is_auction:
+        from django.contrib import messages
+        messages.error(request, "Produk auction tidak dapat dibeli langsung. Silakan ikuti proses lelang.")
+        return redirect('auction:auction_detail', product_id=product_id)
 
     return render(request, "checkout/checkout.html", {
         "product": product,
@@ -136,6 +149,13 @@ def place_order(request):
         insurance = insurance.lower() == "true"
 
     product = Product.objects.get(id=product_id)
+
+    # Prevent direct purchase of auction products
+    if product.is_auction:
+        return JsonResponse(
+            {"status": "error", "message": "Auction products cannot be purchased directly. Please participate in the auction."},
+            status=400
+        )
 
     if product.stock < quantity:
         return JsonResponse(
