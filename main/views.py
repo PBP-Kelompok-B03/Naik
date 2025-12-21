@@ -147,6 +147,7 @@ def show_json(request):
                         'comment_content': comment.content,
                         'comment_author_id': str(comment.author.id) if comment.author else None,
                         'comment_author_username': comment.author.username if comment.author else None,
+                        'comment_author_role': comment.author.profile.role if comment.author and hasattr(comment.author, 'profile') else None,
                         'comment_created_at': comment.created_at.isoformat(),
                         'comment_order_item_id': str(comment.order_item.id) if comment.order_item else None,
                         'replies': [
@@ -155,6 +156,7 @@ def show_json(request):
                                 'reply_content': reply.content,
                                 'reply_author_id': str(reply.author.id) if reply.author else None,
                                 'reply_author_username': reply.author.username if reply.author else None,
+                                'reply_author_role': reply.author.profile.role if reply.author and hasattr(reply.author, 'profile') else None,
                                 'reply_created_at': reply.created_at.isoformat(),
                             }
                             for reply in comment.replies.all()
