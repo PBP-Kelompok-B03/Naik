@@ -49,12 +49,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'main',
-    'checkout',
-    'search',
-    'auction',
-    'comments',
-    'chat',
     'authentication',
+    'auction',
+    'chat',
+    'checkout',
+    'comments',
+    'search',
 ]
 
 MIDDLEWARE = [
@@ -181,12 +181,12 @@ if PRODUCTION:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SAMESITE = 'None'
-else:
-    # Development settings - allow HTTP
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SAMESITE = 'Lax'
+#  else:
+# Development settings - allow HTTP
+# CSRF_COOKIE_SECURE = False
+# SESSION_COOKIE_SECURE = False
+#  CSRF_COOKIE_SAMESITE = 'Lax'
+#  SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Additional CORS settings for static files
 CORS_ALLOW_METHODS = [

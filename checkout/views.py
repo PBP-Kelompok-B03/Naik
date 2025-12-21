@@ -24,12 +24,29 @@ def checkout_view(request):
 
         product = get_object_or_404(Product, id=product_id)
 
+        # === Check if user can checkout this product ===
+        if not product.can_user_checkout(request.user):
+            return JsonResponse({
+                "status": "error", 
+                "message": "You are not authorized to checkout this product. Only the auction winner can checkout auction products."
+            }, status=403)
+
+        # === For auction products, quantity must be 1 ===
+        if product.is_auction:
+            quantity = 1
+
         # === Cek stok ===
         if product.stock < quantity:
             return JsonResponse({"status": "error", "message": "Stok tidak mencukupi."}, status=400)
 
         # === Hitung total dasar ===
-        total_price = Decimal(product.price) * quantity
+        if product.is_auction:
+            # Use the highest bid as the price for auction products
+            product_price = product.get_highest_bid()
+        else:
+            product_price = product.price
+            
+        total_price = Decimal(product_price) * quantity
 
         # === Tambah biaya pengiriman ===
         if shipping_type == "CEPAT":
@@ -46,7 +63,7 @@ def checkout_view(request):
         logger.info(" product_id=%r (type=%s)", product_id, type(product_id).__name__)
         logger.info(" user=%r (type=%s)", request.user, type(request.user).__name__)
         logger.info(" quantity=%r (type=%s)", quantity, type(quantity).__name__)
-        logger.info(" product.price=%r (type=%s)", product.price, type(product.price).__name__)
+        logger.info(" product.price=%r (type=%s)", product_price, type(product_price).__name__)
         logger.info(" computed total_price=%r (type=%s)", total_price, type(total_price).__name__)
         logger.info(" payment_method=%r, shipping_type=%r, insurance(raw)=%r, insurance_flag=%r", payment_method, shipping_type, request.POST.get("insurance"), insurance)
         logger.info(" address=%r, note=%r", address, note)
@@ -73,7 +90,7 @@ def checkout_view(request):
             order=order,
             product=product,
             quantity=quantity,
-            price=product.price,
+            price=product_price,  # Use the actual price (highest bid for auctions)
         )
 
         # Kurangi stok
@@ -93,12 +110,34 @@ def checkout_view(request):
     product_id = request.GET.get("product_id")
     quantity = int(request.GET.get("quantity", 1))
     product = get_object_or_404(Product, id=product_id)
-    total_price = Decimal(product.price) * quantity
+    
+    # === Check if user can checkout this product ===
+    if not product.can_user_checkout(request.user):
+        return render(request, "checkout/checkout.html", {
+            "error": "You are not authorized to checkout this product. Only the auction winner can checkout auction products.",
+            "product": product,
+            "quantity": quantity,
+            "total_price": 0,
+        })
+
+    # === For auction products, quantity must be 1 ===
+    if product.is_auction:
+        quantity = 1
+
+    # === Calculate price ===
+    if product.is_auction:
+        product_price = product.get_highest_bid()
+    else:
+        product_price = product.price
+        
+    total_price = Decimal(product_price) * quantity
 
     return render(request, "checkout/checkout.html", {
         "product": product,
         "quantity": quantity,
         "total_price": total_price,
+        "is_auction": product.is_auction,
+        "final_price": product_price,
     })
 
 @login_required

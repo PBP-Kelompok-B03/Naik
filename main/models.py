@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.forms import ModelForm
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils import timezone
 
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -39,6 +40,37 @@ class Product(models.Model):
 
     def is_in_stock(self):
         return self.stock > 0
+
+    def get_highest_bid(self):
+        """Get the highest bid amount for this auction product"""
+        if not self.is_auction:
+            return None
+        highest_bid = self.bids.aggregate(models.Max('amount'))['amount__max']
+        return highest_bid if highest_bid else self.price
+
+    def get_auction_winner(self):
+        """Get the winner of the auction (user with highest bid)"""
+        if not self.is_auction or self.auction_end_time > timezone.now():
+            return None
+        
+        # Get the bid with highest amount
+        highest_bid = self.bids.order_by('-amount', '-created_at').first()
+        return highest_bid.user if highest_bid else None
+
+    def is_auction_ended(self):
+        """Check if auction has ended"""
+        return self.is_auction and self.auction_end_time <= timezone.now()
+
+    def can_user_checkout(self, user):
+        """Check if user can checkout this auction product"""
+        if not self.is_auction:
+            return True  # Regular products can be checked out by anyone
+        
+        if not self.is_auction_ended():
+            return False  # Auction still active
+        
+        winner = self.get_auction_winner()
+        return winner == user if winner else False
 
 
 class Profile(models.Model):

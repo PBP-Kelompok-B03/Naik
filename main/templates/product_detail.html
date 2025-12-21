@@ -55,16 +55,35 @@
                     {{ product.title }}
                 </h1>
 
-                <p class="text-lg text-gray-700 mb-2">Harga: <strong>Rp{{ product.price }}</strong></p>
-                <p class="text-md text-gray-600 mb-4">Stok tersisa: 
-                    {% if product.stock > 0 %}
-                        <span class="text-green-600 font-semibold">{{ product.stock }}</span>
+                <p class="text-lg text-gray-700 mb-2">
+                    {% if product.is_auction %}
+                        Starting Price: <strong>Rp{{ product.price }}</strong>
+                        {% if current_highest_bid > product.price %}
+                            <br>Current Highest Bid: <strong class="text-green-600">Rp{{ current_highest_bid }}</strong>
+                        {% endif %}
                     {% else %}
-                        <span class="text-red-600 font-semibold">Habis</span>
+                        Harga: <strong>Rp{{ product.price }}</strong>
+                    {% endif %}
+                </p>
+                <p class="text-md text-gray-600 mb-4">
+                    {% if product.is_auction %}
+                        Auction Item
+                        {% if auction_active %}
+                            <span class="text-blue-600 font-semibold">• Auction Active</span>
+                        {% else %}
+                            <span class="text-red-600 font-semibold">• Auction Ended</span>
+                        {% endif %}
+                    {% else %}
+                        Stok tersisa: 
+                        {% if product.stock > 0 %}
+                            <span class="text-green-600 font-semibold">{{ product.stock }}</span>
+                        {% else %}
+                            <span class="text-red-600 font-semibold">Habis</span>
+                        {% endif %}
                     {% endif %}
                 </p>
 
-                {% if product.stock > 0 %}
+                {% if not product.is_auction and product.stock > 0 %}
                 <form id="checkout-form" method="get" action="{% url 'checkout:checkout_view' %}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     
@@ -87,8 +106,6 @@
                         Beli Sekarang
                     </button>
                 </form>
-                {% else %}
-                <p class="text-red-600 font-semibold mt-3">Produk sedang habis stok.</p>
                 {% endif %}
             </div>
         </article>

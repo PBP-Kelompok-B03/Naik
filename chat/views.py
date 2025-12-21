@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
 from django.core.exceptions import MultipleObjectsReturned
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import Conversation, ConversationMessage
 
@@ -59,6 +60,52 @@ def conversation_list(request):
         })
 
     return render(request, "chat_list.html", {"conversations": conversations})
+
+@login_required
+@csrf_exempt
+def api_list(request):
+    """
+    API endpoint to get list of conversations for the current user.
+    Returns JSON with conversations array.
+    """
+    raw_convos = Conversation.objects.filter(Q(user_a=request.user) | Q(user_b=request.user)).order_by('-updated_at')[:200]
+
+    conversations = []
+    for convo in raw_convos:
+        # determine the other user in this conversation
+        other = convo.user_a if convo.user_b == request.user else convo.user_b
+
+        # last message (get the last object if exists)
+        last_obj = convo.messages.order_by('-created_at').first()
+        if last_obj:
+            # if content is empty (e.g. image only) show placeholder
+            last_message_text = last_obj.content.strip() if (last_obj.content and last_obj.content.strip()) else "[gambar]"
+            last_sender_is_me = (last_obj.sender_id == request.user.id)
+            # sender name for preview; if sender is current user set "You" for clarity
+            last_sender_username = "You" if last_sender_is_me else (last_obj.sender.username if last_obj.sender else "")
+            last_message_time = last_obj.created_at.isoformat()
+        else:
+            last_message_text = ""
+            last_sender_is_me = False
+            last_sender_username = ""
+            last_message_time = None
+
+        # count unread messages from the other party
+        unread_count = convo.messages.exclude(sender=request.user).filter(is_read=False).count()
+
+        conversations.append({
+            "id": str(convo.pk),
+            "other_username": other.username,
+            "other_id": str(other.pk),
+            "last_message": last_message_text,
+            "last_message_time": last_message_time,
+            "last_sender_is_me": last_sender_is_me,
+            "last_sender_username": last_sender_username,
+            "unread_count": unread_count,
+            "updated_at": convo.updated_at.isoformat(),
+        })
+
+    return JsonResponse({"conversations": conversations})
 
 @login_required
 def conversation_view(request, convo_id):

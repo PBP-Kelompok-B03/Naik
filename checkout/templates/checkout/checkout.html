@@ -15,6 +15,13 @@
       <div class="mt-4 w-20 h-1 bg-white mx-auto rounded"></div>
     </div>
 
+    {% if error %}
+    <div class="bg-red-600 text-white p-4 rounded-lg mb-6">
+      <p class="font-semibold">Error:</p>
+      <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
     <!-- Form -->
     <form id="checkoutForm" class="space-y-4">
       {% csrf_token %}
@@ -26,13 +33,27 @@
         <label class="font-semibold text-sm text-gray-300">Nama Produk</label>
         <input type="text" value="{{ product.title }}" readonly
                class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+        {% if is_auction %}
+        <p class="text-xs text-yellow-400 mt-1">🏆 Auction Item - Winner's Price</p>
+        {% endif %}
       </div>
 
       <div>
         <label class="font-semibold text-sm text-gray-300">Jumlah</label>
         <input type="number" value="{{ quantity }}" readonly
                class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-white">
+        {% if is_auction %}
+        <p class="text-xs text-gray-400 mt-1">Quantity fixed to 1 for auction items</p>
+        {% endif %}
       </div>
+
+      {% if is_auction %}
+      <div>
+        <label class="font-semibold text-sm text-gray-300">Final Auction Price</label>
+        <input type="text" value="Rp{{ final_price|floatformat:0 }}" readonly
+               class="border-gray-600 mt-1 rounded-lg px-3 py-2 w-full bg-yellow-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-white">
+      </div>
+      {% endif %}
 
       <!-- Address -->
       <div>
