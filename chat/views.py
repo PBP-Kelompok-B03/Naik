@@ -137,6 +137,7 @@ def api_fetch_messages(request, convo_id):
     return JsonResponse({"messages": data})
 
 # --- API: send message (supports image) ---
+@csrf_exempt
 @login_required
 @require_POST
 @transaction.atomic
@@ -164,6 +165,7 @@ def api_send_message(request, convo_id):
 
     return JsonResponse({"ok": True, "id": str(msg.id)})
 
+@csrf_exempt
 @require_POST
 def api_create_conversation(request):
     # API TIDAK BOLEH REDIRECT
