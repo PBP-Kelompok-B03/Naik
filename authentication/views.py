@@ -17,8 +17,23 @@ def login(request):
             "message": "Please use POST method to login with username and password."
         }, status=400)
 
-    username = request.POST['username']
-    password = request.POST['password']
+    # Support both JSON and form-data for backwards compatibility
+    # Prefer JSON format
+    try:
+        # Try to parse as JSON first
+        data = json.loads(request.body)
+        username = data['username']
+        password = data['password']
+    except (json.JSONDecodeError, KeyError):
+        # Fall back to form-data if JSON parsing fails
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if not username or not password:
+            return JsonResponse({
+                "status": False,
+                "message": "Username and password are required."
+            }, status=400)
+
     user = authenticate(username=username, password=password)
     if user is not None:
         if user.is_active:
