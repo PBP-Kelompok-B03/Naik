@@ -129,21 +129,6 @@ def show_json(request):
                 'auction_increment': int(product.auction_increment) if product.auction_increment else None,
                 'auction_end_time': product.auction_end_time.isoformat() if product.auction_end_time else None,
                 'user': product.user.id if product.user else None,
-                # 1. orderitem_set adalah nama default relasi reverse ForeignKey di Django.
-                #    Jika di OrderItem: product = models.ForeignKey(Product, ...), maka Product otomatis punya .orderitem_set.
-                #    Bisa diganti dengan related_name di model, misal related_name='order_items', maka jadi product.order_items.all().
-                # 2. Bisa! Contoh di bawah: kirim dict lengkap untuk setiap OrderItem.
-                # 'order_items': [
-                #     {
-                #     'id': str(item.id),
-                #     'order': str(item.order.id),
-                #     'quantity': item.quantity,
-                #     'price': float(item.price),
-                #     }
-                #     for item in product.orderitem_set.all()
-                # ],
-                # 'comments': [str(comment.id) for comment in product.comments.all()],
-                # 'replies': [str(reply.id) for comment in product.comments.all() for reply in comment.replies.all()],
                 'comments': [
                     {
                         'comment_id': str(comment.id),
