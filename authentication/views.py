@@ -10,6 +10,13 @@ import json
 
 @csrf_exempt
 def login(request):
+    if request.method == 'GET':
+        # For web browser access, return a simple message or redirect
+        return JsonResponse({
+            "status": False,
+            "message": "Please use POST method to login with username and password."
+        }, status=400)
+
     username = request.POST['username']
     password = request.POST['password']
     user = authenticate(username=username, password=password)
