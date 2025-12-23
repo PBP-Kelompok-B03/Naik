@@ -246,7 +246,7 @@ def delete_product(request, id):
     messages.success(request, f"Product '{product.title}' has been deleted successfully!")
     return redirect('main:show_main')
 
-@user_passes_test(lambda u: u.is_superuser or u.profile.role == 'admin')
+@user_passes_test(lambda u: u.is_authenticated and (u.is_superuser or u.profile.role == 'admin'))
 def load_dataset(request):
     csv_path = os.path.join(settings.BASE_DIR, 'static', 'data', 'products.csv')
     image_dir = 'image/products'  # relative path inside static/
